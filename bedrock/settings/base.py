@@ -525,6 +525,7 @@ INSTALLED_APPS = (
     'bedrock.security',
     'bedrock.releasenotes',
     'bedrock.contentcards',
+    'bedrock.contentful',
     'bedrock.utils',
     'bedrock.wordpress',
     'bedrock.sitemaps',
@@ -1102,6 +1103,10 @@ CONTENT_CARDS_PATH = config('CONTENT_CARDS_PATH', default=data_path('content_car
 CONTENT_CARDS_REPO = config('CONTENT_CARDS_REPO', default='https://github.com/mozmeao/www-admin.git')
 CONTENT_CARDS_BRANCH = config('CONTENT_CARDS_BRANCH', default=content_cards_default_branch)
 CONTENT_CARDS_URL = config('CONTENT_CARDS_URL', default=STATIC_URL)
+
+CONTENTFUL_SPACE_ID = config('CONTENTFUL_SPACE_ID', raise_error=False)
+CONTENTFUL_SPACE_KEY = config('CONTENTFUL_SPACE_KEY', raise_error=False)
+CONTENTFUL_SPACE_API = ('preview' if DEV else 'cdn') + '.contentful.com'
 
 RELEASE_NOTES_PATH = config('RELEASE_NOTES_PATH', default=data_path('release_notes'))
 RELEASE_NOTES_REPO = config('RELEASE_NOTES_REPO', default='https://github.com/mozilla/release-notes.git')
