@@ -730,6 +730,12 @@
     },
     {
       "files": [
+        "css/contentful/general.scss"
+      ],
+      "name": "contentful_general"
+    },
+    {
+      "files": [
         "css/firefox/more/misinformation.scss"
       ],
       "name": "misinformation"

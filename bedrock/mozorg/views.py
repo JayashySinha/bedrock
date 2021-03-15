@@ -5,11 +5,17 @@
 from commonware.decorators import xframe_allow
 from django.conf import settings
 from django.shortcuts import render as django_render
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_safe
 from django.views.generic import TemplateView
+
 from lib import l10n_utils
+from lib.l10n_utils import L10nTemplateView, get_locale
 
 from bedrock.contentcards.models import get_page_content_cards
+from bedrock.contentful.api import contentful_home_page
+from bedrock.contentful.models import ContentfulEntry
 from bedrock.mozorg.credits import CreditsFile
 from bedrock.mozorg.forums import ForumsFile
 from bedrock.pocketfeed.models import PocketArticle
@@ -135,3 +141,32 @@ def home_view(request):
         template_name = 'mozorg/home/home.html'
 
     return l10n_utils.render(request, template_name, ctx)
+
+
+
+@method_decorator(never_cache, name='dispatch')
+class contentfulPreviewView(L10nTemplateView):
+    ### TODO: pass to template based on page type
+    locales_map = {
+        'en': 'en-US',
+    }
+
+    def get_template_names(self):
+        return [
+            'mozorg/contentful-preview.html'
+        ]
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        entries = contentful_home_page.get_content(ctx['content_id'])
+        info =contentful_home_page.get_info_data(ctx['content_id'])
+        ctx['info'] =  info if info else ['']
+        ctx['entries'] = entries if entries else ['']
+        return ctx
+
+    def render_to_response(self, context, **response_kwargs):
+        return super().render_to_response(context, **response_kwargs)
+
+
+
+

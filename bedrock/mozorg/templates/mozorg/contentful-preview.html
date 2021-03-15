@@ -1,0 +1,111 @@
+{# This Source Code Form is subject to the terms of the Mozilla Public
+ # License, v. 2.0. If a copy of the MPL was not distributed with this
+ # file, You can obtain one at http://mozilla.org/MPL/2.0/. #}
+
+{% from "macros-protocol.html" import hero, call_out_compact with context %}
+
+{% extends "firefox/base/base-protocol.html" %}
+
+{# analytics #}
+{% set _utm_source = 'mozilla.org-firefox-' + info.slug %}
+{% set _utm_campaign = 'features' %}
+{% set referrals = '?utm_source=www.mozilla.org&utm_medium=referral&utm_campaign=' + _utm_campaign %}
+
+{% set show_send_to_device = LANG in settings.SEND_TO_DEVICE_LOCALES %}
+{% set android_url = firefox_adjust_url('android', 'mobile-page') %}
+{% set ios_url = firefox_adjust_url('ios', 'mobile-page') %}
+
+
+{# meta data #}
+{% block page_title %}{{ info.title }}{% endblock %}
+{% block page_desc %}{{ info.blurb }}{% endblock %}
+{% if info.image != '' %}
+{% block page_image %}{{ info.image }}{% endblock %}
+{% endif %}
+{% block page_og_title %}{{ info.title }}{% endblock %}
+{% block page_og_desc %}{{ info.blurb }}{% endblock %}
+
+{% block page_css %}
+  {{ css_bundle('contentful_general') }}
+{% endblock %}
+
+{% block body_class %}mzp-t-firefox wmo-contentful{% endblock %}
+
+
+{% macro cta(action, label) -%}
+  {% if action == 'Download Firefox' %}
+
+    {{ download_firefox(download_location='primary cta') }}
+
+  {% elif action == 'Create a Firefox Account' %}
+
+    {{ fxa_button(
+      entrypoint=_utm_source,
+      button_text=label,
+      optional_parameters={'utm_campaign': _utm_campaign, 'utm_content': 'firefox-sync-' + info.slug },
+      optional_attributes={'data-cta-text': label, 'data-cta-type': 'fxa-sync', 'data-cta-position': 'primary'}
+    ) }}
+
+  {% endif %}
+{%- endmacro %}
+
+
+{# TODO: need to update 'primary' or 'secondary' in cta postitions #}
+
+{% block content %}
+<main role="main">
+
+  {% for entry in entries -%}
+    {% if entry.component == 'hero' %}
+
+    {% if entries.index(entry) == 0: %}
+      {% set heading_level = 1 %}
+    {% else %}
+      {% set heading_level = 2 %}
+    {% endif %}
+
+      {% call hero(
+        title=entry.title,
+        tagline=entry.tagline,
+        desc=entry.body|safe,
+        class=entry.theme_class + ' ' + entry.product_class + ' ' + entry.image_class,
+        include_cta=entry.cta.include_cta,
+        heading_level=heading_level,
+        image_url=entry.image,
+        include_highres_image=False,
+        l10n_image=False
+      ) %}
+
+        {{ cta(entry.cta.action, entry.cta.label) }}
+
+      {% endcall %}
+
+    {% elif entry.component == 'callout' %}
+
+      {% call call_out_compact(
+        title=entry.title,
+        desc=entry.body,
+        class=entry.theme_class + ' ' + entry.product_class,
+      ) %}
+        <div class="download-firefox">
+          {{ download_firefox(download_location='secondary cta') }}
+        </div>
+      {% endcall %}
+
+    {% elif entry.component == 'text' %}
+
+      <div class="mzp-l-content {{ entry.width_class }}">
+        <article class="mzp-c-article">
+          {{ entry.body|safe }}
+        </article>
+      </div>
+
+    {% endif %}
+
+  {% endfor %}
+
+</main>
+{% endblock %}
+
+
+{% block js %}{% endblock %}
