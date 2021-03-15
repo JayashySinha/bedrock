@@ -3,7 +3,7 @@ from django.utils.timezone import now
 
 from django_extensions.db.fields.json import JSONField
 
-from bedrock.contentful.api import contentful_home_page
+from bedrock.contentful.api import contentful_preview_page
 
 
 class ContentfulEntry(models.Model):

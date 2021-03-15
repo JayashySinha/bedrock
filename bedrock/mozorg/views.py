@@ -14,7 +14,7 @@ from lib import l10n_utils
 from lib.l10n_utils import L10nTemplateView, get_locale
 
 from bedrock.contentcards.models import get_page_content_cards
-from bedrock.contentful.api import contentful_home_page
+from bedrock.contentful.api import contentful_preview_page
 from bedrock.contentful.models import ContentfulEntry
 from bedrock.mozorg.credits import CreditsFile
 from bedrock.mozorg.forums import ForumsFile
@@ -158,8 +158,8 @@ class contentfulPreviewView(L10nTemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        entries = contentful_home_page.get_content(ctx['content_id'])
-        info =contentful_home_page.get_info_data(ctx['content_id'])
+        entries = contentful_preview_page.get_content(ctx['content_id'])
+        info =contentful_preview_page.get_info_data(ctx['content_id'])
         ctx['info'] =  info if info else ['']
         ctx['entries'] = entries if entries else ['']
         return ctx

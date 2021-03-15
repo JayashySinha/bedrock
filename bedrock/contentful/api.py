@@ -110,7 +110,6 @@ class ContentfulPage(ContentfulBase):
         return [self.get_page_data(p.id) for p in pages]
 
     def get_page_data(self, page_id):
-        layouts = []
         page = self.client.entry(page_id, {'include': 5})
         page_data = {
             'id': page.id,
@@ -144,39 +143,37 @@ class ContentfulPage(ContentfulBase):
 
         return info_data
 
-
-    # def get_content(self, page_id):
-    #     page_obj = self.client.entry(page_id)
-    #     fields = page_obj.fields()
-    #     print(fields)
-
-    #     entries = []
-    #     # look through all entries and find content ones
-    #     for key, value in fields.items():
-    #         if key == 'component_hero':
-    #             entries.append(self.get_hero_data(value.id))
-    #         elif key == 'body':
-    #             entries.append(self.get_text_data(value))
-    #         elif key == 'layout_callout':
-    #             entries.append(self.get_callout_data(value.id))
-
-    #     return entries
-
-
     def get_content(self, page_id):
         page_obj = self.client.entry(page_id)
+        page_type = page_obj.sys.get('content_type').id
         fields = page_obj.fields()
-        content = fields.get('content')
-        #print(content)
 
         entries = []
-        # get components from content
-        for item in content:
-            content_type = item.sys.get('content_type').id
-            if content_type == 'componentHero':
-                entries.append(self.get_hero_data(item.id))
-            elif content_type == 'layoutCallout':
-                entries.append(self.get_callout_data(item.id))
+        if page_type == 'pageGeneral':
+            # general
+            # look through all entries and find content ones
+            for key, value in fields.items():
+                if key == 'component_hero':
+                    entries.append(self.get_hero_data(value.id))
+                elif key == 'body':
+                    entries.append(self.get_text_data(value))
+                elif key == 'layout_callout':
+                    entries.append(self.get_callout_data(value.id))
+        elif page_type == 'pageVersatile':
+            #versatile
+            content = fields.get('content')
+
+            # get components from content
+            for item in content:
+                content_type = item.sys.get('content_type').id
+                if content_type == 'componentHero':
+                    entries.append(self.get_hero_data(item.id))
+                elif content_type == 'layoutCallout':
+                    entries.append(self.get_callout_data(item.id))
+        elif page_type == 'pageHome':
+            #home
+            entries = []
+        #TODO: error if not found
 
         return entries
 
@@ -221,7 +218,7 @@ class ContentfulPage(ContentfulBase):
         content_id = config_fields.get('component_callout').id
         content_obj = self.get_entry_by_id(content_id)
         content_fields = content_obj.fields()
-        content_body = self.renderer.render(content_fields.get('body'))
+        content_body = self.renderer.render(content_fields.get('body')) if content_fields.get('body') else ''
 
         callout_data = {
             'component': 'callout',
@@ -229,6 +226,7 @@ class ContentfulPage(ContentfulBase):
             'product_class': _get_product_class(content_fields.get('product_icon')),
             'title': content_fields.get('heading'),
             'body': content_body,
+            'cta': self.get_cta_data(content_fields.get('cta').id) if content_fields.get('cta') else {'include_cta': False,}
         }
 
         return callout_data
@@ -248,7 +246,7 @@ class ContentfulPage(ContentfulBase):
         return cta_data
 
 
-contentful_home_page = ContentfulPage()
+contentful_preview_page = ContentfulPage()
 
 
 #TODO make optional fields optional

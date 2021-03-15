@@ -84,12 +84,12 @@
 
       {% call call_out_compact(
         title=entry.title,
-        desc=entry.body,
+        desc=entry.body|safe,
         class=entry.theme_class + ' ' + entry.product_class,
       ) %}
-        <div class="download-firefox">
-          {{ download_firefox(download_location='secondary cta') }}
-        </div>
+
+        {{ cta(entry.cta.action, entry.cta.label) }}
+
       {% endcall %}
 
     {% elif entry.component == 'text' %}
