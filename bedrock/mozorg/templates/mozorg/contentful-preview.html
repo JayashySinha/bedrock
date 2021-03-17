@@ -2,7 +2,7 @@
  # License, v. 2.0. If a copy of the MPL was not distributed with this
  # file, You can obtain one at http://mozilla.org/MPL/2.0/. #}
 
-{% from "macros-protocol.html" import hero, call_out_compact with context %}
+{% from "macros-protocol.html" import hero, call_out_compact, card with context %}
 
 {% extends "firefox/base/base-protocol.html" %}
 
@@ -100,6 +100,35 @@
         </article>
       </div>
 
+    {% elif entry.component == 'cardLayout' %}
+      <div class="mzp-l-content">
+        <div class="{{ entry.layout_class }}">
+
+          {% for card_data in entry.cards -%}
+            {% if card_data.component == 'large_card' %}
+              {% set size_class = 'mzp-c-card-large' %}
+            {% else %}
+              {% set size_class = 'mzp-c-card-medium' %}
+            {% endif %}
+
+            {{ card(
+              class=size_class,
+              tag_label=card_data.tag,
+              title=card_data.heading,
+              desc=card_data.body|safe,
+              ga_title='ga_title',
+              highres_image_url=card_data.highres_image_url,
+              image_url=card_data.image_url,
+              aspect_ratio=card_data.aspect_ratio,
+              link_url=card_data.link,
+            ) }}
+
+          {% endfor %}
+
+        </div>
+      </div>
+    {% elif entry.component == 'sectionHeading' %}
+      <h2 class="c-section-heading">{{ entry.heading }}</h2>
     {% endif %}
 
   {% endfor %}
@@ -108,4 +137,6 @@
 {% endblock %}
 
 
-{% block js %}{% endblock %}
+{% block js %}
+  {{ js_bundle('more') }}
+{% endblock %}

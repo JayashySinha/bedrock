@@ -151,22 +151,27 @@ class contentfulPreviewView(L10nTemplateView):
         'en': 'en-US',
     }
 
-    def get_template_names(self):
-        return [
-            'mozorg/contentful-preview.html'
-        ]
-
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        page_type = contentful_preview_page.get_page_type(ctx['content_id'])
+        info = contentful_preview_page.get_info_data(ctx['content_id'])
         entries = contentful_preview_page.get_content(ctx['content_id'])
-        info =contentful_preview_page.get_info_data(ctx['content_id'])
+        ctx['page_type'] = page_type if page_type else ['']
         ctx['info'] =  info if info else ['']
         ctx['entries'] = entries if entries else ['']
         return ctx
 
     def render_to_response(self, context, **response_kwargs):
-        return super().render_to_response(context, **response_kwargs)
+        info = context['page_type']
+        if info == "pageHome":
+            template = 'mozorg/contentful-homepage.html'
+        else:
+            template = 'mozorg/contentful-preview.html'
 
+        return l10n_utils.render(self.request,
+                                 template,
+                                 context,
+                                 **response_kwargs)
 
 
 

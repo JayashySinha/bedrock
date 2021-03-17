@@ -9,6 +9,7 @@ $image-path: '/media/protocol/img';
 @import '../../protocol/css/components/hero';
 @import '../../protocol/css/components/article';
 @import '../../protocol/css/components/call-out';
+@import '../../protocol/css/templates/card-layout';
 
 // --------------------------------------------------------------------------
 // Protocol over-rides
@@ -67,5 +68,18 @@ $h-grid-lg: 80px;
 
     &.mzp-c-call-out-compact {
         background-color: $color-ink-80;
+    }
+}
+
+
+.c-section-heading {
+    @include text-title-md;
+    margin: 0 auto $layout-lg;
+    padding: 0 $layout-sm;
+    max-width: $content-lg + $layout-lg * 2;
+    text-align: center;
+
+    strong {
+        white-space: nowrap;
     }
 }
