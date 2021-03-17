@@ -55,6 +55,24 @@
   {% endif %}
 {% endblock %}
 
+{% macro cta(action, label) -%}
+  {% if action == 'Download Firefox' %}
+
+    {{ download_firefox(download_location='primary cta') }}
+
+  {% elif action == 'Create a Firefox Account' %}
+
+    {{ fxa_button(
+      entrypoint=_utm_source,
+      button_text=label,
+      optional_parameters={'utm_campaign': _utm_campaign, 'utm_content': 'firefox-sync-' + info.slug },
+      optional_attributes={'data-cta-text': label, 'data-cta-type': 'fxa-sync', 'data-cta-position': 'primary'}
+    ) }}
+
+  {% endif %}
+{%- endmacro %}
+
+
 {% block content %}
 {% block main %}
 <main role="main">

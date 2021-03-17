@@ -101,6 +101,14 @@ def _get_aspect_ratio_class(aspect_ratio):
     return f'mzp-has-aspect-{ASPECT_RATIOS.get(aspect_ratio, "")}'
 
 
+def _get_aspect_ratio_class(aspect_ratio):
+    ratios = {
+        '1:1' : '1-1',
+        '3:2' : '3-2',
+        '16:9' : '16-9',
+    }
+    return 'mzp-has-aspect-' + ratios[aspect_ratio] if aspect_ratio in ratios else ''
+
 def _get_width_class(width):
     width_abbr = _get_abbr_from_width(width)
     return f'mzp-t-content-{width_abbr}'
@@ -183,17 +191,20 @@ class ContentfulPage(ContentfulBase):
                     entries.append(self.get_text_data(value))
                 elif key == 'layout_callout':
                     entries.append(self.get_callout_data(value.id))
+
         elif page_type == 'pageVersatile':
             # versatile
             content = fields.get('content')
 
-            # get components from content
-            for item in content:
-                content_type = item.sys.get('content_type').id
-                if content_type == 'componentHero':
-                    entries.append(self.get_hero_data(item.id))
-                elif content_type == 'layoutCallout':
-                    entries.append(self.get_callout_data(item.id))
+            if content:
+                # get components from content
+                for item in content:
+                    content_type = item.sys.get('content_type').id
+                    if content_type == 'componentHero':
+                        entries.append(self.get_hero_data(item.id))
+                    elif content_type == 'layoutCallout':
+                        entries.append(self.get_callout_data(item.id))
+
         elif page_type == 'pageHome':
             # home
             content = fields.get('content')
