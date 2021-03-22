@@ -56,6 +56,7 @@
 <main role="main">
 
   {% for entry in entries -%}
+
     {% if entry.component == 'hero' %}
 
     {% if entries.index(entry) == 0: %}
@@ -130,6 +131,7 @@
     {% elif entry.component == 'sectionHeading' %}
       <h2 class="c-section-heading">{{ entry.heading }}</h2>
     {% endif %}
+
 
   {% endfor %}
 

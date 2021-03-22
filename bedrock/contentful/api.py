@@ -202,8 +202,16 @@ class ContentfulPage(ContentfulBase):
                     content_type = item.sys.get('content_type').id
                     if content_type == 'componentHero':
                         entries.append(self.get_hero_data(item.id))
+                    elif content_type == 'componentSectionHeading':
+                        entries.append(self.get_section_heading_data(item.id))
                     elif content_type == 'layoutCallout':
                         entries.append(self.get_callout_data(item.id))
+                    elif content_type == 'layout2Cards':
+                        entries.append(self.get_card_layout_data(item.id))
+                    elif content_type == 'layout3Cards':
+                        entries.append(self.get_card_layout_data(item.id))
+                    elif content_type == 'layout5Cards':
+                        entries.append(self.get_card_layout_data(item.id))
 
         elif page_type == 'pageHome':
             # home
