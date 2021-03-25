@@ -359,18 +359,24 @@ class ContentfulPage(ContentfulBase):
             'cards': [],
         }
 
+        follows_large_card = False
         if layout == 'layout5Cards':
             card_layout_id = config_fields.get('large_card').id
             card_id = config_fields.get('large_card').fields().get('card').id
             large_card_data = self.get_large_card_data(card_layout_id, card_id)
 
             card_layout_data.get('cards').append(large_card_data)
-            # TODO: first card after large card needs to be 1:1
+            follows_large_card = True
 
         cards = config_fields.get('content')
         for card in cards:
+            if follows_large_card == True:
+                this_aspect = '1:1'
+                follows_large_card = False
+            else:
+                this_aspect = aspect_ratio
             card_id = card.id
-            card_data = self.get_card_data(card_id, aspect_ratio)
+            card_data = self.get_card_data(card_id, this_aspect)
             card_layout_data.get('cards').append(card_data)
 
         return card_layout_data
