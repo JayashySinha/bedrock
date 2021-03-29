@@ -314,13 +314,20 @@ class ContentfulPage(ContentfulBase):
         return callout_data
 
     def get_card_data(self, card_id, aspect_ratio):
+        # need a fallback aspect ratio
+        if aspect_ratio == None:
+            aspect_ratio = '16:9'
         card_obj = self.get_entry_by_id(card_id)
         card_fields = card_obj.fields()
         card_body = self.renderer.render(card_fields.get('body')) if card_fields.get('body') else ''
 
-        card_image = card_fields.get('image')
-        highres_image_url = _get_image_url(card_image, 800, aspect_ratio)
-        image_url = _get_image_url(card_image, 800, aspect_ratio)
+        if 'image' in card_fields:
+            card_image = card_fields.get('image')
+            #TODO smaller when layout allows it
+            highres_image_url = _get_image_url(card_image, 800, aspect_ratio)
+            image_url = _get_image_url(card_image, 800, aspect_ratio)
+        else:
+            image_url = ''
 
         if 'you_tube' in card_fields:
             youtube_id = _get_youtube_id(card_fields.get('you_tube'))
@@ -333,7 +340,7 @@ class ContentfulPage(ContentfulBase):
                 'tag': card_fields.get('tag'),
                 'link': card_fields.get('link'),
                 'body': card_body,
-                'aspect_ratio': _get_aspect_ratio_class(aspect_ratio),
+                'aspect_ratio': _get_aspect_ratio_class(aspect_ratio) if image_url != '' else '',
                 'highres_image_url': highres_image_url,
                 'image_url': image_url,
                 'youtube_id': youtube_id,
