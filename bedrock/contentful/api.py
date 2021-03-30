@@ -124,7 +124,7 @@ def _get_theme_class(theme):
 def _get_youtube_id(youtube_url):
     url_data = urlparse(youtube_url)
     queries = parse_qs(url_data.query)
-    youtube_id = queries["v"]
+    youtube_id = queries["v"][0]
     return youtube_id
 
 class ContentfulBase:
