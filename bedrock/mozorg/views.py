@@ -11,11 +11,10 @@ from django.views.decorators.http import require_safe
 from django.views.generic import TemplateView
 
 from lib import l10n_utils
-from lib.l10n_utils import L10nTemplateView, get_locale
+from lib.l10n_utils import L10nTemplateView
 
 from bedrock.contentcards.models import get_page_content_cards
 from bedrock.contentful.api import contentful_preview_page
-from bedrock.contentful.models import ContentfulEntry
 from bedrock.mozorg.credits import CreditsFile
 from bedrock.mozorg.forums import ForumsFile
 from bedrock.pocketfeed.models import PocketArticle
@@ -143,22 +142,16 @@ def home_view(request):
     return l10n_utils.render(request, template_name, ctx)
 
 
-
 @method_decorator(never_cache, name='dispatch')
-class contentfulPreviewView(L10nTemplateView):
-    ### TODO: pass to template based on page type
+class ContentfulPreviewView(L10nTemplateView):
+    # TODO: pass to template based on page type
     locales_map = {
         'en': 'en-US',
     }
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        page_type = contentful_preview_page.get_page_type(ctx['content_id'])
-        info = contentful_preview_page.get_info_data(ctx['content_id'])
-        entries = contentful_preview_page.get_content(ctx['content_id'])
-        ctx['page_type'] = page_type if page_type else ['']
-        ctx['info'] =  info if info else ['']
-        ctx['entries'] = entries if entries else ['']
+        ctx.update(contentful_preview_page.get_content(ctx['content_id']))
         return ctx
 
     def render_to_response(self, context, **response_kwargs):
@@ -172,6 +165,3 @@ class contentfulPreviewView(L10nTemplateView):
                                  template,
                                  context,
                                  **response_kwargs)
-
-
-

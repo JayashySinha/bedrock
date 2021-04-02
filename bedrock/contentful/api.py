@@ -9,6 +9,35 @@ from rich_text_renderer.text_renderers import BaseInlineRenderer
 LOCALE_MAP = {
     'de': 'de-DE',
 }
+ASPECT_RATIOS = {
+    '1:1': '1-1',
+    '3:2': '3-2',
+    '16:9': '16-9',
+}
+ASPECT_MULTIPLIER = {
+    '1:1': 1,
+    '3:2': 0.6666,
+    '16:9': 0.5625
+}
+PRODUCT_THEMES = {
+    'Firefox': 'firefox',
+    'Firefox Beta': 'beta',
+    'Firefox Developer': 'developer',
+    'Firefox Nightly': 'nightly',
+}
+WIDTHS = {
+    'Extra Small': 'xs',
+    'Small': 'sm',
+    'Medium': 'md',
+    'Large': 'lg',
+    'Extra Large': 'xl',
+}
+LAYOUT_CLASS = {
+    'layout2Cards': 'mzp-l-card-half',
+    'layout3Cards': 'mzp-l-card-third',
+    'layout4Cards': 'mzp-l-card-quarter',
+    'layout5Cards': 'mzp-l-card-hero',
+}
 
 
 class StrongRenderer(BaseInlineRenderer):
@@ -44,17 +73,7 @@ def contentful_locale(locale):
 
 
 def _get_height(width, aspect):
-    height = 0
-    if aspect == '1:1':
-        height = width
-
-    if aspect == '3:2':
-        height = width * 0.6666
-
-    if aspect == '16:9':
-        height = width * 0.5625
-
-    return round(height)
+    return round(width * ASPECT_MULTIPLIER.get(aspect, 0))
 
 
 def _get_image_url(image, width, aspect):
@@ -65,50 +84,27 @@ def _get_image_url(image, width, aspect):
         f='faces',
     )
 
+
 def _get_product_class(product):
-    product_themes = {
-        'Firefox' : 'firefox',
-        'Firefox Beta' : 'beta',
-        'Firefox Developer' : 'developer',
-        'Firefox Nightly' : 'nightly',
-    }
-    return 'mzp-t-product-' + product_themes[product] if product in product_themes else ''
+    return f'mzp-t-product-{PRODUCT_THEMES.get(product, "")}'
+
 
 def _get_layout_class(layout):
-    layout_class = ''
-    if layout == 'layout5Cards':
-        layout_class = 'mzp-l-card-hero'
-    elif layout == 'layout2Cards':
-        layout_class = 'mzp-l-card-half'
-    elif layout == 'layout3Cards':
-        layout_class = 'mzp-l-card-third'
-    elif layout == 'layout4Cards':
-        layout_class = 'mzp-l-card-quarter'
-
-    return layout_class
+    return LAYOUT_CLASS.get(layout, '')
 
 
 def _get_abbr_from_width(width):
-    widths = {
-        'Extra Small' : 'xs',
-        'Small' : 'sm',
-        'Medium' : 'md',
-        'Large' : 'lg',
-        'Extra Large' : 'xl',
-    }
-    return widths[width] if width in widths else ''
+    return WIDTHS.get(width, '')
+
 
 def _get_aspect_ratio_class(aspect_ratio):
-    ratios = {
-        '1:1' : '1-1',
-        '3:2' : '3-2',
-        '16:9' : '16-9',
-    }
-    return 'mzp-has-aspect-' + ratios[aspect_ratio] if aspect_ratio in ratios else ''
+    return f'mzp-has-aspect-{ASPECT_RATIOS.get(aspect_ratio, "")}'
+
 
 def _get_width_class(width):
     width_abbr = _get_abbr_from_width(width)
-    return 'mzp-t-content-' + width_abbr if width_abbr != '' else ''
+    return f'mzp-t-content-{width_abbr}'
+
 
 def _get_theme_class(theme):
     return 'mzp-t-dark' if theme == "Dark" else ''
@@ -118,10 +114,11 @@ class ContentfulBase:
     def __init__(self):
         self.client = get_client()
 
+
 class ContentfulPage(ContentfulBase):
-    #TODO: List: stop list items from being wrapped in paragraph tags
-    #TODO: List: add class to lists to format
-    #TODO: If last item in content is a p:only(a) add cta link class?
+    # TODO: List: stop list items from being wrapped in paragraph tags
+    # TODO: List: add class to lists to format
+    # TODO: If last item in content is a p:only(a) add cta link class?
     renderer = RichTextRenderer({
         'bold': StrongRenderer,
     })
@@ -133,9 +130,11 @@ class ContentfulPage(ContentfulBase):
 
     def get_page_data(self, page_id):
         page = self.client.entry(page_id, {'include': 5})
+        fields = page.fields()
         page_data = {
-            'id': page.id,
-            'content_type': page.content_type.id,
+            'page_type': page.content_type.id,
+            'info': self.get_info_data(fields),
+            'fields': fields,
         }
         return page_data
 
@@ -154,14 +153,12 @@ class ContentfulPage(ContentfulBase):
     def get_entry_by_id(self, entry_id):
         return self.client.entry(entry_id)
 
-    def get_info_data(self, page_id):
-        page_obj = self.client.entry(page_id)
-        fields = page_obj.fields()
-
+    @staticmethod
+    def get_info_data(fields):
         info_data = {
             'title': fields['preview_title'],
             'blurb': fields['preview_blurb'],
-            'slug': fields['slug'] if 'slug' in fields else 'home',
+            'slug': fields.get('slug', 'home'),
         }
 
         if 'preview_image' in fields:
@@ -171,9 +168,9 @@ class ContentfulPage(ContentfulBase):
         return info_data
 
     def get_content(self, page_id):
-        page_obj = self.client.entry(page_id)
-        page_type = self.get_page_type(page_id)
-        fields = page_obj.fields()
+        page_data = self.get_page_data(page_id)
+        page_type = page_id['page_type']
+        fields = page_data['fields']
 
         entries = []
         if page_type == 'pageGeneral':
@@ -187,7 +184,7 @@ class ContentfulPage(ContentfulBase):
                 elif key == 'layout_callout':
                     entries.append(self.get_callout_data(value.id))
         elif page_type == 'pageVersatile':
-            #versatile
+            # versatile
             content = fields.get('content')
 
             # get components from content
@@ -198,7 +195,7 @@ class ContentfulPage(ContentfulBase):
                 elif content_type == 'layoutCallout':
                     entries.append(self.get_callout_data(item.id))
         elif page_type == 'pageHome':
-            #home
+            # home
             content = fields.get('content')
 
             # get components from content
@@ -216,15 +213,19 @@ class ContentfulPage(ContentfulBase):
                     entries.append(self.get_card_layout_data(item.id))
                 elif content_type == 'layout5Cards':
                     entries.append(self.get_card_layout_data(item.id))
-        #TODO: error if not found
+        # TODO: error if not found
 
-        return entries
+        return {
+            'page_type': page_type,
+            'info': page_data['info'],
+            'entries': entries,
+        }
 
     def get_text_data(self, value):
         text_data = {
             'component': 'text',
             'body': self.renderer.render(value),
-            'width_class': _get_width_class('Medium') #TODO
+            'width_class': _get_width_class('Medium')  # TODO
         }
 
         return text_data
@@ -247,13 +248,10 @@ class ContentfulPage(ContentfulBase):
             'image': 'https:' + hero_image_url,
             'image_position': fields.get('image_position'),
             'image_class': 'mzp-l-reverse' if hero_reverse == 'Left' else '',
-            'cta': self.get_cta_data(fields.get('cta').id) if fields.get('cta') else {'include_cta': False,}
+            'cta': self.get_cta_data(fields.get('cta')),
         }
 
-        #print(hero_data)
-
         return hero_data
-
 
     def get_section_heading_data(self, heading_id):
         heading_obj = self.get_entry_by_id(heading_id)
@@ -265,7 +263,6 @@ class ContentfulPage(ContentfulBase):
         }
 
         return heading_data
-
 
     def get_callout_data(self, callout_id):
         config_obj = self.get_entry_by_id(callout_id)
@@ -282,11 +279,10 @@ class ContentfulPage(ContentfulBase):
             'product_class': _get_product_class(content_fields.get('product_icon')),
             'title': content_fields.get('heading'),
             'body': content_body,
-            'cta': self.get_cta_data(content_fields.get('cta').id) if content_fields.get('cta') else {'include_cta': False,}
+            'cta': self.get_cta_data(content_fields.get('cta')),
         }
 
         return callout_data
-
 
     def get_card_data(self, card_id, aspect_ratio):
         card_obj = self.get_entry_by_id(card_id)
@@ -350,7 +346,7 @@ class ContentfulPage(ContentfulBase):
             large_card_data = self.get_large_card_data(card_layout_id, card_id)
 
             card_layout_data.get('cards').append(large_card_data)
-            #TODO: first card after large card needs to be 1:1
+            # TODO: first card after large card needs to be 1:1
 
         cards = config_fields.get('content')
         for card in cards:
@@ -360,7 +356,12 @@ class ContentfulPage(ContentfulBase):
 
         return card_layout_data
 
-    def get_cta_data(self, cta_id):
+    def get_cta_data(self, cta):
+        if cta:
+            cta_id = cta.id
+        else:
+            return {'include_cta': False}
+
         cta_obj = self.get_entry_by_id(cta_id)
         cta_fields = cta_obj.fields()
 
@@ -368,8 +369,8 @@ class ContentfulPage(ContentfulBase):
             'component': cta_obj.sys.get('content_type').id,
             'label': cta_fields.get('label'),
             'action': cta_fields.get('action'),
-            'size': 'mzp-t-xl',  #TODO
-            'theme': 'mzp-t-primary',  #TODO
+            'size': 'mzp-t-xl',  # TODO
+            'theme': 'mzp-t-primary',  # TODO
             'include_cta': True,
         }
         return cta_data
@@ -378,4 +379,4 @@ class ContentfulPage(ContentfulBase):
 contentful_preview_page = ContentfulPage()
 
 
-#TODO make optional fields optional
+# TODO make optional fields optional
