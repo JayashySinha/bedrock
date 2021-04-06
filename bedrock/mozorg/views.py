@@ -144,19 +144,19 @@ def home_view(request):
 
 @method_decorator(never_cache, name='dispatch')
 class ContentfulPreviewView(L10nTemplateView):
-    # TODO: pass to template based on page type
     locales_map = {
         'en': 'en-US',
     }
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx.update(contentful_preview_page.get_content(ctx['content_id']))
+        content_id = ctx['content_id']
+        ctx.update(contentful_preview_page.get_content(content_id))
         return ctx
 
     def render_to_response(self, context, **response_kwargs):
-        info = context['page_type']
-        if info == "pageHome":
+        page_type = context['page_type']
+        if page_type == "pageHome":
             template = 'mozorg/contentful-homepage.html'
         else:
             template = 'mozorg/contentful-preview.html'

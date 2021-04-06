@@ -102,17 +102,6 @@ def _get_aspect_ratio_class(aspect_ratio):
     return f'mzp-has-aspect-{ASPECT_RATIOS.get(aspect_ratio, "")}'
 
 
-def _get_aspect_ratio_class(aspect_ratio):
-    ratios = {
-        '1:1' : '1-1',
-        '3:2' : '3-2',
-        '16:9' : '16-9',
-    }
-
-    ratio = ratios[aspect_ratio] if aspect_ratio in ratios else '16-9'
-
-    return 'mzp-has-aspect-' + ratio
-
 def _get_width_class(width):
     width_abbr = _get_abbr_from_width(width)
     return f'mzp-t-content-{width_abbr}'
@@ -121,11 +110,13 @@ def _get_width_class(width):
 def _get_theme_class(theme):
     return 'mzp-t-dark' if theme == "Dark" else ''
 
+
 def _get_youtube_id(youtube_url):
     url_data = urlparse(youtube_url)
     queries = parse_qs(url_data.query)
     youtube_id = queries["v"][0]
     return youtube_id
+
 
 class ContentfulBase:
     def __init__(self):
@@ -186,13 +177,12 @@ class ContentfulPage(ContentfulBase):
 
     def get_content(self, page_id):
         page_data = self.get_page_data(page_id)
-        page_type = page_id['page_type']
+        page_type = page_data['page_type']
         fields = page_data['fields']
 
         entries = []
         if page_type == 'pageGeneral':
-            # general
-            # look through all entries and find content ones
+             # look through all entries and find content ones
             for key, value in fields.items():
                 if key == 'component_hero':
                     entries.append(self.get_hero_data(value.id))
@@ -200,7 +190,6 @@ class ContentfulPage(ContentfulBase):
                     entries.append(self.get_text_data(value))
                 elif key == 'layout_callout':
                     entries.append(self.get_callout_data(value.id))
-
         elif page_type == 'pageVersatile':
             # versatile
             content = fields.get('content')
@@ -248,7 +237,11 @@ class ContentfulPage(ContentfulBase):
                         entries.append(self.get_card_layout_data(item.id))
                     #TODO: error if not found
 
-        return entries
+        return {
+            'page_type': page_type,
+            'info': page_data['info'],
+            'entries': entries,
+        }
 
     def get_text_data(self, value):
         text_data = {
@@ -323,7 +316,7 @@ class ContentfulPage(ContentfulBase):
 
         if 'image' in card_fields:
             card_image = card_fields.get('image')
-            #TODO smaller when layout allows it
+            # TODO smaller image files when layout allows it
             highres_image_url = _get_image_url(card_image, 800, aspect_ratio)
             image_url = _get_image_url(card_image, 800, aspect_ratio)
         else:
