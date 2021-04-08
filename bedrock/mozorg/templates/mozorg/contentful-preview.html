@@ -2,7 +2,7 @@
  # License, v. 2.0. If a copy of the MPL was not distributed with this
  # file, You can obtain one at http://mozilla.org/MPL/2.0/. #}
 
-{% from "macros-protocol.html" import hero, call_out_compact, card with context %}
+{% from "macros-protocol.html" import hero, call_out_compact, card, split, picto with context %}
 
 {% extends "firefox/base/base-protocol.html" %}
 
@@ -74,7 +74,6 @@
         heading_level=heading_level,
         image_url=entry.image,
         include_highres_image=False,
-        l10n_image=False
       ) %}
 
         {{ cta(entry.cta.action, entry.cta.label) }}
@@ -130,7 +129,38 @@
         </div>
       </div>
     {% elif entry.component == 'sectionHeading' %}
-      <h2 class="c-section-heading">{{ entry.heading }}</h2>
+      <h2 class="mzp-c-section-heading">{{ entry.heading }}</h2>
+    {% elif entry.component == 'pictoLayout' %}
+
+      <ul class="mzp-l-content {{ entry.layout_class }}">
+      {% for picto_data in entry.pictos -%}
+
+        {{ picto(
+          image_url=picto_data.image_url,
+          heading=picto_data.heading,
+          body=picto_data.body,
+        ) }}
+
+      {% endfor %}
+      </ul>
+
+    {% elif entry.component == 'split' %}
+
+      {% call split(
+        block_class=entry.block_class,
+        body_class=entry.body_class,
+        theme_class=entry.theme_class,
+        has_bg=entry.has_bg,
+        media_class=entry.media_class,
+        mobile_class=entry.mobile_class,
+        image_url=entry.image,
+        include_highres_image=False,
+      ) %}
+
+        {{ entry.body|safe }}
+
+      {% endcall %}
+
     {% endif %}
 
 

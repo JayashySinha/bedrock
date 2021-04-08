@@ -3,6 +3,7 @@ from urllib.parse import urlparse, parse_qs
 
 import contentful as api
 from rich_text_renderer import RichTextRenderer
+from rich_text_renderer.base_node_renderer import BaseNodeRenderer
 from rich_text_renderer.text_renderers import BaseInlineRenderer
 
 
@@ -21,10 +22,17 @@ ASPECT_MULTIPLIER = {
     '16:9': 0.5625
 }
 PRODUCT_THEMES = {
-    'Firefox': 'firefox',
-    'Firefox Beta': 'beta',
-    'Firefox Developer': 'developer',
-    'Firefox Nightly': 'nightly',
+    'Firefox': 'family',
+    'Firefox Browser': 'firefox',
+    'Firefox Browser Beta': 'beta',
+    'Firefox Browser Developer': 'developer',
+    'Firefox Browser Nightly': 'nightly',
+    'Firefox Browser Focus': 'focus',
+    'Firefox Monitor': 'monitor',
+    'Firefox Lockwise': 'lockwise',
+    'Mozilla': 'mozilla',
+    'Mozilla VPN': 'vpn',
+    'Pocket': 'pocket',
 }
 WIDTHS = {
     'Extra Small': 'xs',
@@ -38,6 +46,18 @@ LAYOUT_CLASS = {
     'layout3Cards': 'mzp-l-card-third',
     'layout4Cards': 'mzp-l-card-quarter',
     'layout5Cards': 'mzp-l-card-hero',
+}
+THEME_CLASS = {
+    'Light': '',
+    'Light (alternative)': 'mzp-t-background-alt',
+    'Dark': 'mzp-t-dark',
+    'Dark (alternative)': 'mzp-t-dark mzp-t-background-alt',
+}
+COLUMN_CLASS = {
+    '1': '',
+    '2': 'mzp-l-columns mzp-t-columns-two ',
+    '3': 'mzp-l-columns mzp-t-columns-three',
+    '4': 'mzp-l-columns mzp-t-columns-four',
 }
 
 
@@ -103,12 +123,11 @@ def _get_aspect_ratio_class(aspect_ratio):
 
 
 def _get_width_class(width):
-    width_abbr = _get_abbr_from_width(width)
-    return f'mzp-t-content-{width_abbr}'
+    return f'mzp-t-content-{WIDTHS.get(width, "")}'
 
 
 def _get_theme_class(theme):
-    return 'mzp-t-dark' if theme == "Dark" else ''
+    return THEME_CLASS.get(theme, '')
 
 
 def _get_youtube_id(youtube_url):
@@ -117,6 +136,17 @@ def _get_youtube_id(youtube_url):
     youtube_id = queries["v"][0]
     return youtube_id
 
+
+def _get_column_class(columns):
+    return COLUMN_CLASS.get(columns, '')
+
+
+class MyInlineRenderer(BaseNodeRenderer):
+    def render(self, node):
+        entry = node['data']['target']
+        content_type = entry.sys.get('content_type').id
+
+        return content_type
 
 class ContentfulBase:
     def __init__(self):
@@ -129,6 +159,7 @@ class ContentfulPage(ContentfulBase):
     # TODO: If last item in content is a p:only(a) add cta link class?
     renderer = RichTextRenderer({
         'bold': StrongRenderer,
+        'embedded-entry-inline': MyInlineRenderer
     })
     client = None
 
@@ -179,6 +210,7 @@ class ContentfulPage(ContentfulBase):
         page_data = self.get_page_data(page_id)
         page_type = page_data['page_type']
         fields = page_data['fields']
+        content = None
 
         entries = []
         if page_type == 'pageGeneral':
@@ -193,49 +225,32 @@ class ContentfulPage(ContentfulBase):
         elif page_type == 'pageVersatile':
             # versatile
             content = fields.get('content')
-
-            if content:
-                # get components from content
-                for item in content:
-                    content_type = item.sys.get('content_type').id
-                    if content_type == 'componentHero':
-                        entries.append(self.get_hero_data(item.id))
-                    elif content_type == 'componentSectionHeading':
-                        entries.append(self.get_section_heading_data(item.id))
-                    elif content_type == 'layoutCallout':
-                        entries.append(self.get_callout_data(item.id))
-                    elif content_type == 'layout2Cards':
-                        entries.append(self.get_card_layout_data(item.id))
-                    elif content_type == 'layout3Cards':
-                        entries.append(self.get_card_layout_data(item.id))
-                    elif content_type == 'layout4Cards':
-                        entries.append(self.get_card_layout_data(item.id))
-                    elif content_type == 'layout5Cards':
-                        entries.append(self.get_card_layout_data(item.id))
-
         elif page_type == 'pageHome':
             # home
             content = fields.get('content')
 
-            if content:
-                # get components from content
-                for item in content:
-                    content_type = item.sys.get('content_type').id
-                    if content_type == 'componentHero':
-                        entries.append(self.get_hero_data(item.id))
-                    elif content_type == 'componentSectionHeading':
-                        entries.append(self.get_section_heading_data(item.id))
-                    elif content_type == 'layoutCallout':
-                        entries.append(self.get_callout_data(item.id))
-                    elif content_type == 'layout2Cards':
-                        entries.append(self.get_card_layout_data(item.id))
-                    elif content_type == 'layout3Cards':
-                        entries.append(self.get_card_layout_data(item.id))
-                    elif content_type == 'layout4Cards':
-                        entries.append(self.get_card_layout_data(item.id))
-                    elif content_type == 'layout5Cards':
-                        entries.append(self.get_card_layout_data(item.id))
-                    #TODO: error if not found
+        if content:
+            # get components from content
+            for item in content:
+                content_type = item.sys.get('content_type').id
+                if content_type == 'componentHero':
+                    entries.append(self.get_hero_data(item.id))
+                elif content_type == 'componentSectionHeading':
+                    entries.append(self.get_section_heading_data(item.id))
+                elif content_type == 'componentSplitBlock':
+                    entries.append(self.get_split_data(item.id))
+                elif content_type == 'layoutCallout':
+                    entries.append(self.get_callout_data(item.id))
+                elif content_type == 'layout2Cards':
+                    entries.append(self.get_card_layout_data(item.id))
+                elif content_type == 'layout3Cards':
+                    entries.append(self.get_card_layout_data(item.id))
+                elif content_type == 'layout4Cards':
+                    entries.append(self.get_card_layout_data(item.id))
+                elif content_type == 'layout5Cards':
+                    entries.append(self.get_card_layout_data(item.id))
+                elif content_type == 'layoutPictoBlocks':
+                    entries.append(self.get_picto_layout_data(item.id))
 
         return {
             'page_type': page_type,
@@ -257,7 +272,7 @@ class ContentfulPage(ContentfulBase):
         fields = hero_obj.fields()
 
         hero_image_url = fields['image'].fields().get('file').get('url')
-        hero_reverse = fields.get('image_position')
+        hero_reverse = fields.get('image_side')
         hero_body = self.renderer.render(fields.get('body'))
 
         hero_data = {
@@ -268,7 +283,6 @@ class ContentfulPage(ContentfulBase):
             'tagline': fields.get('tagline'),
             'body': hero_body,
             'image': 'https:' + hero_image_url,
-            'image_position': fields.get('image_position'),
             'image_class': 'mzp-l-reverse' if hero_reverse == 'Left' else '',
             'cta': self.get_cta_data(fields.get('cta')),
         }
@@ -285,6 +299,95 @@ class ContentfulPage(ContentfulBase):
         }
 
         return heading_data
+
+    def get_split_data(self, split_id):
+
+        SPLIT_LAYOUT_CLASS = {
+            'Even': '',
+            'Narrow': 'mzp-l-split-body-narrow',
+            'Wide': 'mzp-l-split-body-wide',
+        }
+
+        SPLIT_MEDIA_WIDTH_CLASS = {
+            'Fill available width': '',
+            'Fill available height': 'mzp-l-split-media-constrain-height',
+            'Overflow container': 'mzp-l-split-media-overflow',
+        }
+
+        SPLIT_V_ALIGN_CLASS = {
+            'Top': 'mzp-l-split-v-start',
+            'Center': 'mzp-l-split-v-center',
+            'Bottom': 'mzp-l-split-v-end',
+        }
+
+        SPLIT_H_ALIGN_CLASS = {
+            'Left': 'mzp-l-split-h-start',
+            'Center': 'mzp-l-split-h-center',
+            'Right': 'mzp-l-split-h-end',
+        }
+
+        SPLIT_POP_CLASS = {
+            'None': '',
+            'Both': 'mzp-l-split-pop',
+            'Top': 'mzp-l-split-pop-top',
+            'Bottom': 'mzp-l-split-pop-bottom',
+        }
+
+        split_obj = self.get_entry_by_id(split_id)
+        fields = split_obj.fields()
+
+        def get_block_class():
+
+            block_classes = [
+                'mzp-l-split-reversed' if fields.get('image_side') == 'Left' else '',
+                SPLIT_LAYOUT_CLASS.get(fields.get('body_width'), ''),
+                SPLIT_POP_CLASS.get(fields.get('image_pop'), ''),
+            ]
+
+            return ' '.join(block_classes)
+
+        def get_body_class():
+            body_classes = [
+                SPLIT_V_ALIGN_CLASS.get(fields.get('body_vertical_alignment'), ''),
+                SPLIT_H_ALIGN_CLASS.get(fields.get('body_horizontal_alignment'), '')
+            ]
+            return ' '.join(body_classes)
+
+        def get_media_class():
+            media_classes = [
+                SPLIT_MEDIA_WIDTH_CLASS.get(fields.get('image_width'), '')
+            ]
+            # v_align_class = SPLIT_V_ALIGN_CLASS.get(fields.get('image_vertical_alignment'), '')
+            # h_align_class = SPLIT_H_ALIGN_CLASS.get(fields.get('image_horizontal_alignment'), '')
+
+            return ' '.join(media_classes)
+
+        def get_mobile_class():
+            mobile_classes = [
+                'mzp-l-split-center-on-sm-md' if 'Center content' in fields.get('mobile_display') else '',
+                'mzp-l-split-hide-media-on-sm-md' if 'Hide image' in fields.get('mobile_display') else '',
+            ]
+
+            return ' '.join(mobile_classes)
+
+
+        split_image_url = fields['image'].fields().get('file').get('url')
+
+        split_data = {
+            'component': 'split',
+            'block_class': get_block_class(),
+            'theme_class': _get_theme_class(fields.get('theme')),
+            'has_bg': True if _get_theme_class(fields.get('theme')) != '' else False,
+            'body_class': get_body_class(),
+            'body': self.renderer.render(fields.get('body')),
+            'media_class': get_media_class(),
+            'image': 'https:' + split_image_url, #TODO max width
+            'mobile_class': get_mobile_class(),
+        }
+
+        # print(fields.get('body'))
+
+        return split_data
 
     def get_callout_data(self, callout_id):
         config_obj = self.get_entry_by_id(callout_id)
@@ -396,6 +499,64 @@ class ContentfulPage(ContentfulBase):
             card_layout_data.get('cards').append(card_data)
 
         return card_layout_data
+
+
+    def get_picto_data(self, picto_id):
+        picto_obj = self.get_entry_by_id(picto_id)
+        picto_fields = picto_obj.fields()
+        picto_body = self.renderer.render(picto_fields.get('body')) if picto_fields.get('body') else ''
+
+        if 'icon' in picto_fields:
+            picto_image = picto_fields.get('icon')
+            # TODO request image without aspect ratio
+            image_url = _get_image_url(picto_image, 800, '1:1')
+        else:
+            image_url = ''
+
+        if 'you_tube' in picto_fields:
+            youtube_id = _get_youtube_id(picto_fields.get('you_tube'))
+        else:
+            youtube_id = ''
+
+        picto_data = {
+                'component': 'picto',
+                'heading': picto_fields.get('heading'),
+                'body': picto_body,
+                'image_url': image_url,
+            }
+
+        return picto_data
+
+    def get_picto_layout_data(self, layout_id):
+
+        def get_layout_class():
+            layout_classes = [
+                _get_width_class(config_fields.get('width')) if config_fields.get('width') else '',
+                _get_column_class(str(config_fields.get('blocks_per_row')) if config_fields.get('blocks_per_row') else '3'),
+                'mzp-t-picto-side' if config_fields.get('icon_position') == 'Side' else '',
+                'mzp-t-picto-center' if config_fields.get('block_alignment') == 'Center' else '',
+                _get_theme_class(config_fields.get('theme')) if config_fields.get('theme') else '',
+            ]
+
+            return ' '.join(layout_classes)
+
+        config_obj = self.get_entry_by_id(layout_id)
+        config_fields = config_obj.fields()
+        layout = config_obj.sys.get('content_type').id
+
+        picto_layout_data = {
+            'component': 'pictoLayout',
+            'layout_class': get_layout_class(),
+            'pictos': [],
+        }
+
+        pictos = config_fields.get('content')
+        for picto in pictos:
+            picto_id = picto.id
+            picto_data = self.get_picto_data(picto_id)
+            picto_layout_data.get('pictos').append(picto_data)
+
+        return picto_layout_data
 
     def get_cta_data(self, cta):
         if cta:
