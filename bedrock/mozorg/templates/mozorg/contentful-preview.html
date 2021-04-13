@@ -32,26 +32,6 @@
 {% block body_class %}mzp-t-firefox wmo-contentful{% endblock %}
 
 
-{% macro cta(action, label) -%}
-  {% if action == 'Download Firefox' %}
-
-    {{ download_firefox(download_location='primary cta') }}
-
-  {% elif action == 'Create a Firefox Account' %}
-
-    {{ fxa_button(
-      entrypoint=_utm_source,
-      button_text=label,
-      optional_parameters={'utm_campaign': _utm_campaign, 'utm_content': 'firefox-sync-' + info.slug },
-      optional_attributes={'data-cta-text': label, 'data-cta-type': 'fxa-sync', 'data-cta-position': 'primary'}
-    ) }}
-
-  {% endif %}
-{%- endmacro %}
-
-
-{# TODO: need to update 'primary' or 'secondary' in cta postitions #}
-
 {% block content %}
 <main role="main">
 
@@ -76,7 +56,7 @@
         include_highres_image=False,
       ) %}
 
-        {{ cta(entry.cta.action, entry.cta.label) }}
+        {{ cta|safe }}
 
       {% endcall %}
 
@@ -88,7 +68,7 @@
         class=entry.theme_class + ' ' + entry.product_class,
       ) %}
 
-        {{ cta(entry.cta.action, entry.cta.label) }}
+      {{ cta|safe }}
 
       {% endcall %}
 

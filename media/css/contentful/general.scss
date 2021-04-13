@@ -18,52 +18,28 @@ $brand-theme: 'firefox';
 @import '../../protocol/css/templates/multi-column';
 @import '../../protocol/css/base/utilities/backgrounds';
 
+@import '../../protocol/css/components/logos/logo';
+@import '../../protocol/css/components/logos/logo-product-family';
+@import '../../protocol/css/components/logos/logo-product-firefox';
+@import '../../protocol/css/components/logos/logo-product-beta';
+@import '../../protocol/css/components/logos/logo-product-developer';
+@import '../../protocol/css/components/logos/logo-product-nightly';
+@import '../../protocol/css/components/logos/logo-product-focus';
+@import '../../protocol/css/components/logos/logo-product-monitor';
+@import '../../protocol/css/components/logos/logo-product-lockwise';
+@import '../../protocol/css/components/logos/logo-product-mozilla';
+@import '../../protocol/css/components/logos/logo-product-vpn';
+@import '../../protocol/css/components/logos/logo-product-pocket';
+@import '../../protocol/css/components/logos/wordmark';
+@import '../../protocol/css/components/logos/wordmark-product-family';
+@import '../../protocol/css/components/logos/wordmark-product-firefox';
+@import '../../protocol/css/components/logos/wordmark-product-beta';
+@import '../../protocol/css/components/logos/wordmark-product-developer';
+@import '../../protocol/css/components/logos/wordmark-product-nightly';
+@import '../../protocol/css/components/logos/wordmark-product-focus';
+@import '../../protocol/css/components/logos/wordmark-product-monitor';
+@import '../../protocol/css/components/logos/wordmark-product-lockwise';
+@import '../../protocol/css/components/logos/wordmark-product-mozilla';
+@import '../../protocol/css/components/logos/wordmark-product-vpn';
+@import '../../protocol/css/components/logos/wordmark-product-pocket';
 
-// --------------------------------------------------------------------------
-// Protocol over-rides
-// https://github.com/mozilla/protocol/issues/345
-// https://github.com/mozilla/protocol/issues/536
-// https://github.com/mozilla/bedrock/pull/9096
-
-$content-xs: 304px;
-$content-sm: 432px;
-$content-md: 688px;
-$content-lg: 928px;
-$content-xl: 1152px;
-$content-max: 1440px;
-
-$screen-xs: 320px;
-$screen-sm: 480px;
-$screen-md: 768px;
-$screen-lg: 1024px;
-$screen-xl: 1312px;
-
-// xs
-$v-grid-xs: $layout-md;
-$h-grid-xs: $layout-xs;
-
-//md
-$v-grid-md: $layout-xl / 2;
-$h-grid-md: 64px;
-
-//lg
-$v-grid-lg: 192px / 2;
-$h-grid-lg: 80px;
-
-.wmo-contentful main {
-    > .mzp-l-content {
-        color: $color-dark-gray-30;
-        padding-top: $v-grid-xs;
-        padding-bottom: $v-grid-xs;
-
-        @media #{$mq-md} {
-            padding-top: $v-grid-md;
-            padding-bottom: $v-grid-md;
-        }
-
-        @media #{$mq-lg} {
-            padding-top: $v-grid-lg;
-            padding-bottom: $v-grid-lg;
-        }
-    }
-}

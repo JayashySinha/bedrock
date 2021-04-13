@@ -1,0 +1,24 @@
+{# This Source Code Form is subject to the terms of the Mozilla Public
+ # License, v. 2.0. If a copy of the MPL was not distributed with this
+ # file, You can obtain one at http://mozilla.org/MPL/2.0/. -#}
+
+
+{% if action == 'Download Firefox' %}
+
+  {{ download_firefox_thanks(dom_id='download-button-primary', download_location='primary') }}
+
+{% elif action == 'Create a Firefox Account' %}
+
+  {{ fxa_button(
+    entrypoint=_utm_source,
+    button_text=label,
+    optional_parameters={'utm_campaign': _utm_campaign, 'utm_content': 'firefox-sync-' + info.slug },
+    optional_attributes={'data-cta-text': label, 'data-cta-type': 'fxa-sync', 'data-cta-position': 'primary'}
+  ) }}
+
+{% elif action == 'Get Pocket' %}
+    <a href="https://getpocket.com/{{ referral|safe }}" class="mzp-c-button {{ button_class }}" rel="external noopener" data-cta-type="link" data-cta-text="{{ label }}">{{ label }}</a>
+{% endif %}
+
+
+{# TODO: need to update 'primary' or 'secondary' in cta postitions #}

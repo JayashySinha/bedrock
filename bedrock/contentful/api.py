@@ -1,9 +1,11 @@
 from django.conf import settings
+from django.template.loader import render_to_string
 from urllib.parse import urlparse, parse_qs
 
 import contentful as api
 from rich_text_renderer import RichTextRenderer
 from rich_text_renderer.base_node_renderer import BaseNodeRenderer
+from rich_text_renderer.block_renderers import BaseBlockRenderer
 from rich_text_renderer.text_renderers import BaseInlineRenderer
 
 
@@ -59,17 +61,6 @@ COLUMN_CLASS = {
     '3': 'mzp-l-columns mzp-t-columns-three',
     '4': 'mzp-l-columns mzp-t-columns-four',
 }
-
-
-class StrongRenderer(BaseInlineRenderer):
-    @property
-    def _render_tag(self):
-        return 'strong'
-
-
-renderer = RichTextRenderer({
-    'bold': StrongRenderer,
-})
 
 
 def get_client():
@@ -141,12 +132,99 @@ def _get_column_class(columns):
     return COLUMN_CLASS.get(columns, '')
 
 
-class MyInlineRenderer(BaseNodeRenderer):
+def _make_logo(entry):
+    product = entry.fields()['product']
+
+    data = {
+        'logo_size': 'md', # TODO
+        'product_name': product,
+        'product_icon': PRODUCT_THEMES.get(product, ""),
+    }
+
+    return render_to_string('logo.html', data)
+
+def _make_wordmark(entry):
+    product = entry.fields()['product']
+
+    data = {
+        'logo_size': 'md', # TODO
+        'product_name': product,
+        'product_icon': PRODUCT_THEMES.get(product, ""),
+    }
+
+    return render_to_string('wordmark.html', data)
+
+def _make_cta_button(entry, request):
+#     # print(entry.fields())
+
+# def get_cta_data(self, cta):
+#         if cta:
+#             cta_id = cta.id
+#         else:
+#             return {'include_cta': False}
+
+#         cta_obj = self.get_entry_by_id(cta_id)
+#         cta_fields = cta_obj.fields()
+
+#         cta_data = {
+#             'component': cta_obj.sys.get('content_type').id,
+#             'label': cta_fields.get('label'),
+#             'action': cta_fields.get('action'),
+#             'size': 'mzp-t-xl',  # TODO
+#             'theme': 'mzp-t-primary',  # TODO
+#             'include_cta': True,
+#         }
+#         return cta_data
+
+
+
+
+    fields = entry.fields()
+
+    button_class = [
+        'mzp-t-product', # TODO, not product on Mozilla pages
+        'mzp-t-secondary' if fields.get('theme') == 'Secondary' else '',
+    ]
+
+    data = {
+        'action': fields.get('action'),
+        'label': fields.get('label'),
+        'button_size': WIDTHS.get(fields.get("size"), ""),
+        'button_class': ' '.join(button_class),
+
+    }
+    return render_to_string('cta.html', data, request)
+
+
+class StrongRenderer(BaseInlineRenderer):
+    @property
+    def _render_tag(self):
+        return 'strong'
+
+
+class UlRenderer(BaseBlockRenderer):
+    def render(self, node):
+        return "<{0} class='mzp-u-list-styled'>{1}</{0}>".format('ul', self._render_content(node))
+
+
+class OlRenderer(BaseBlockRenderer):
+    def render(self, node):
+        return "<{0} class='mzp-u-list-styled'>{1}</{0}>".format('ol', self._render_content(node))
+
+
+class inlineEntryRenderer(BaseNodeRenderer):
     def render(self, node):
         entry = node['data']['target']
         content_type = entry.sys.get('content_type').id
 
-        return content_type
+        if content_type == 'componentLogo':
+            return _make_logo(entry)
+        elif content_type == 'componentWordmark':
+            return _make_wordmark(entry)
+        elif content_type == 'componentCtaButton':
+            return _make_cta_button(entry, request)
+        else:
+            return content_type
 
 class ContentfulBase:
     def __init__(self):
@@ -155,13 +233,16 @@ class ContentfulBase:
 
 class ContentfulPage(ContentfulBase):
     # TODO: List: stop list items from being wrapped in paragraph tags
-    # TODO: List: add class to lists to format
     # TODO: If last item in content is a p:only(a) add cta link class?
     renderer = RichTextRenderer({
         'bold': StrongRenderer,
-        'embedded-entry-inline': MyInlineRenderer
+        'Unordered-list': UlRenderer,
+        'ordered-list': OlRenderer,
+        'embedded-entry-inline': inlineEntryRenderer
     })
     client = None
+
+    request = ''
 
     def get_all_page_data(self):
         pages = self.client.entries({'content_type': 'pageVersatile'})
@@ -284,7 +365,7 @@ class ContentfulPage(ContentfulBase):
             'body': hero_body,
             'image': 'https:' + hero_image_url,
             'image_class': 'mzp-l-reverse' if hero_reverse == 'Left' else '',
-            'cta': self.get_cta_data(fields.get('cta')),
+            'cta': _make_cta_button(fields.get('cta'), request),
         }
 
         return hero_data
@@ -385,7 +466,7 @@ class ContentfulPage(ContentfulBase):
             'mobile_class': get_mobile_class(),
         }
 
-        # print(fields.get('body'))
+        #print(self.renderer.render(fields.get('body')))
 
         return split_data
 
@@ -404,7 +485,7 @@ class ContentfulPage(ContentfulBase):
             'product_class': _get_product_class(content_fields.get('product_icon')),
             'title': content_fields.get('heading'),
             'body': content_body,
-            'cta': self.get_cta_data(content_fields.get('cta')),
+            'cta': _make_cta_button(content_fields.get('cta'), request),
         }
 
         return callout_data
