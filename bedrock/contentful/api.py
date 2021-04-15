@@ -90,7 +90,12 @@ def _get_height(width, aspect):
     return round(width * ASPECT_MULTIPLIER.get(aspect, 0))
 
 
-def _get_image_url(image, width, aspect):
+def _get_image_url(image, width):
+    return 'https:' + image.url(
+        w=width,
+    )
+
+def _get_card_image_url(image, width, aspect):
     return 'https:' + image.url(
         w=width,
         h=_get_height(width, aspect),
@@ -241,7 +246,9 @@ class ContentfulBase:
 
 class ContentfulPage(ContentfulBase):
     # TODO: List: stop list items from being wrapped in paragraph tags
+    # TODO: Don't output empty paragraph tags
     # TODO: If last item in content is a p:only(a) add cta link class?
+    # TODO: Error/ Warn / Transform links to allizom
     _renderer = RichTextRenderer({
         'bold': StrongRenderer,
         'Unordered-list': UlRenderer,
@@ -340,6 +347,12 @@ class ContentfulPage(ContentfulBase):
                     entries.append(self.get_card_layout_data(item.id))
                 elif content_type == 'layoutPictoBlocks':
                     entries.append(self.get_picto_layout_data(item.id))
+                elif content_type == 'textOneColumn':
+                    entries.append(self.get_text_column_data(1, item.id))
+                elif content_type == 'textTwoColumns':
+                    entries.append(self.get_text_column_data(2, item.id))
+                elif content_type == 'textThreeColumns':
+                    entries.append(self.get_text_column_data(3, item.id))
 
         return {
             'page_type': page_type,
@@ -373,6 +386,7 @@ class ContentfulPage(ContentfulBase):
             'body': hero_body,
             'image': 'https:' + hero_image_url,
             'image_class': 'mzp-l-reverse' if hero_reverse == 'Left' else '',
+            'include_cta': True if fields.get('cta') else False,
             'cta': _make_cta_button(fields.get('cta')),
         }
 
@@ -508,8 +522,8 @@ class ContentfulPage(ContentfulBase):
         if 'image' in card_fields:
             card_image = card_fields.get('image')
             # TODO smaller image files when layout allows it
-            highres_image_url = _get_image_url(card_image, 800, aspect_ratio)
-            image_url = _get_image_url(card_image, 800, aspect_ratio)
+            highres_image_url = _get_card_image_url(card_image, 800, aspect_ratio)
+            image_url = _get_card_image_url(card_image, 800, aspect_ratio)
         else:
             image_url = ''
 
@@ -538,8 +552,8 @@ class ContentfulPage(ContentfulBase):
 
         # large card data
         large_card_image = large_card_fields.get('image')
-        highres_image_url = _get_image_url(large_card_image, 1860, "16:9")
-        image_url = _get_image_url(large_card_image, 1860, "16:9")
+        highres_image_url = _get_card_image_url(large_card_image, 1860, "16:9")
+        image_url = _get_card_image_url(large_card_image, 1860, "16:9")
 
         # get card data
         card_data = self.get_card_data(card_id, "16:9")
@@ -596,15 +610,9 @@ class ContentfulPage(ContentfulBase):
 
         if 'icon' in picto_fields:
             picto_image = picto_fields.get('icon')
-            # TODO request image without aspect ratio
-            image_url = _get_image_url(picto_image, 800, '1:1')
+            image_url = _get_image_url(picto_image, 800)
         else:
-            image_url = ''
-
-        if 'you_tube' in picto_fields:
-            youtube_id = _get_youtube_id(picto_fields.get('you_tube'))
-        else:
-            youtube_id = ''
+            image_url = '' # TODO: this should cause an error, the macro requires an image
 
         picto_data = {
                 'component': 'picto',
@@ -635,6 +643,8 @@ class ContentfulPage(ContentfulBase):
         picto_layout_data = {
             'component': 'pictoLayout',
             'layout_class': get_layout_class(),
+            'heading_level': config_fields.get('heading_level')[1:] if config_fields.get('heading_level') else 3,
+            'image_width': 64,
             'pictos': [],
         }
 
@@ -646,25 +656,31 @@ class ContentfulPage(ContentfulBase):
 
         return picto_layout_data
 
-    def get_cta_data(self, cta):
-        if cta:
-            cta_id = cta.id
-        else:
-            return {'include_cta': False}
+    def get_text_column_data(self, cols, text_id):
+        entry_obj = self.get_entry_by_id(text_id)
+        fields = entry_obj.fields()
 
-        cta_obj = self.get_entry_by_id(cta_id)
-        cta_fields = cta_obj.fields()
+        def get_content_class():
+            content_classes = [
+                _get_width_class(fields.get('width')) if fields.get('width') else '',
+                _get_column_class(str(cols)),
+                _get_theme_class(fields.get('theme')) if fields.get('theme') else '',
+            ]
 
-        cta_data = {
-            'component': cta_obj.sys.get('content_type').id,
-            'label': cta_fields.get('label'),
-            'action': cta_fields.get('action'),
-            'size': 'mzp-t-xl',  # TODO
-            'theme': 'mzp-t-primary',  # TODO
-            'include_cta': True,
+            return ' '.join(content_classes)
+
+        text_data = {
+            'component': 'textColumns',
+            'layout_class': get_content_class(),
+            'content': [self.render_rich_text(fields.get('body_column_one')) if fields.get('body_column_one') else ''],
         }
-        return cta_data
 
+        if cols > 1:
+            text_data['content'].append(self.render_rich_text(fields.get('body_column_two')) if fields.get('body_column_two') else '')
+        if cols > 2:
+            text_data['content'].append(self.render_rich_text(fields.get('body_column_three')) if fields.get('body_column_three') else '')
+
+        return text_data
 
 contentful_preview_page = ContentfulPage()
 

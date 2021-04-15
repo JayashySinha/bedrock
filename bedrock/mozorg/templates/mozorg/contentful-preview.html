@@ -50,13 +50,13 @@
         tagline=entry.tagline,
         desc=entry.body|safe,
         class=entry.theme_class + ' ' + entry.product_class + ' ' + entry.image_class,
-        include_cta=entry.cta.include_cta,
+        include_cta=entry.include_cta,
         heading_level=heading_level,
         image_url=entry.image,
         include_highres_image=False,
       ) %}
 
-        {{ cta|safe }}
+        {{ entry.cta }}
 
       {% endcall %}
 
@@ -68,16 +68,26 @@
         class=entry.theme_class + ' ' + entry.product_class,
       ) %}
 
-      {{ cta|safe }}
+        {{ entry.cta }}
 
       {% endcall %}
 
     {% elif entry.component == 'text' %}
 
       <div class="mzp-l-content {{ entry.width_class }}">
-        <article class="mzp-c-article">
+        <article>
           {{ entry.body|safe }}
         </article>
+      </div>
+
+    {% elif entry.component == 'textColumns' %}
+
+      <div class="mzp-l-content mzp-l-columns {{ entry.layout_class }}">
+        {% for body in entry.content -%}
+          <div>
+            {{ body|safe }}
+          </div>
+        {% endfor %}
       </div>
 
     {% elif entry.component == 'cardLayout' %}
@@ -117,7 +127,9 @@
 
         {{ picto(
           image_url=picto_data.image_url,
+          image_width=entry.image_width,
           heading=picto_data.heading,
+          heading_level=entry.heading_level,
           body=picto_data.body,
         ) }}
 

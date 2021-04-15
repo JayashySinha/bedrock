@@ -368,16 +368,16 @@
 {%- endmacro %}
 
 {# Picto: https://protocol.mozilla.org/patterns/molecules/picto.html #}
-{% macro picto(image_url, img_width=64, heading=None, body=None, class=None, heading_level=2, base_el='li') -%}
+{% macro picto(image_url, image_width=64, heading=None, body=None, class=None, heading_level=3, base_el='li') -%}
   <{{ base_el }} class="mzp-c-picto {% if class %}{{ class }}{% endif %}">
     <div class="mzp-c-picto-image">
       {% if image_url.startswith('https')  %}
-        <img src="{{ image_url }}" alt="" width="{{ img_width }}">
+        <img src="{{ image_url }}" alt="" width="{{ image_width }}">
       {% else %}
-        <img src="{{ static(image_url) }}" alt="" width="{{ img_width }}">
+        <img src="{{ static(image_url) }}" alt="" width="{{ image_width }}">
       {% endif %}
     </div>
-    <h3 class="mzp-c-picto-heading">{{ heading }}</h3>
+    <h{{ heading_level }} class="mzp-c-picto-heading">{{ heading }}</h{{ heading_level }}>
     <div class="mzp-c-picto-body">
       {{ body|safe }}
     </div>
