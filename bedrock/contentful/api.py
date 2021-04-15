@@ -1,12 +1,14 @@
 from django.conf import settings
-from django.template.loader import render_to_string
 from urllib.parse import urlparse, parse_qs
 
 import contentful as api
+from crum import get_current_request
 from rich_text_renderer import RichTextRenderer
 from rich_text_renderer.base_node_renderer import BaseNodeRenderer
 from rich_text_renderer.block_renderers import BaseBlockRenderer
 from rich_text_renderer.text_renderers import BaseInlineRenderer
+
+from lib.l10n_utils import render_to_string
 
 
 # Bedrock to Contentful locale map
@@ -141,7 +143,8 @@ def _make_logo(entry):
         'product_icon': PRODUCT_THEMES.get(product, ""),
     }
 
-    return render_to_string('logo.html', data)
+    return render_to_string('logo.html', data, get_current_request())
+
 
 def _make_wordmark(entry):
     product = entry.fields()['product']
@@ -152,9 +155,10 @@ def _make_wordmark(entry):
         'product_icon': PRODUCT_THEMES.get(product, ""),
     }
 
-    return render_to_string('wordmark.html', data)
+    return render_to_string('wordmark.html', data, get_current_request())
 
-def _make_cta_button(entry, request):
+
+def _make_cta_button(entry):
 #     # print(entry.fields())
 
 # def get_cta_data(self, cta):
@@ -176,9 +180,6 @@ def _make_cta_button(entry, request):
 #         }
 #         return cta_data
 
-
-
-
     fields = entry.fields()
 
     button_class = [
@@ -193,7 +194,7 @@ def _make_cta_button(entry, request):
         'button_class': ' '.join(button_class),
 
     }
-    return render_to_string('cta.html', data, request)
+    return render_to_string('cta.html', data, get_current_request())
 
 
 class StrongRenderer(BaseInlineRenderer):
@@ -202,17 +203,21 @@ class StrongRenderer(BaseInlineRenderer):
         return 'strong'
 
 
+def _render_list(tag, content):
+    return f"<{tag} class='mzp-u-list-styled'>{content}</{tag}>"
+
+
 class UlRenderer(BaseBlockRenderer):
     def render(self, node):
-        return "<{0} class='mzp-u-list-styled'>{1}</{0}>".format('ul', self._render_content(node))
+        return _render_list('ul', self._render_content(node))
 
 
 class OlRenderer(BaseBlockRenderer):
     def render(self, node):
-        return "<{0} class='mzp-u-list-styled'>{1}</{0}>".format('ol', self._render_content(node))
+        return _render_list('ol', self._render_content(node))
 
 
-class inlineEntryRenderer(BaseNodeRenderer):
+class InlineEntryRenderer(BaseNodeRenderer):
     def render(self, node):
         entry = node['data']['target']
         content_type = entry.sys.get('content_type').id
@@ -222,11 +227,14 @@ class inlineEntryRenderer(BaseNodeRenderer):
         elif content_type == 'componentWordmark':
             return _make_wordmark(entry)
         elif content_type == 'componentCtaButton':
-            return _make_cta_button(entry, request)
+            return _make_cta_button(entry)
         else:
             return content_type
 
+
 class ContentfulBase:
+    client = None
+
     def __init__(self):
         self.client = get_client()
 
@@ -234,15 +242,15 @@ class ContentfulBase:
 class ContentfulPage(ContentfulBase):
     # TODO: List: stop list items from being wrapped in paragraph tags
     # TODO: If last item in content is a p:only(a) add cta link class?
-    renderer = RichTextRenderer({
+    _renderer = RichTextRenderer({
         'bold': StrongRenderer,
         'Unordered-list': UlRenderer,
         'ordered-list': OlRenderer,
-        'embedded-entry-inline': inlineEntryRenderer
+        'embedded-entry-inline': InlineEntryRenderer,
     })
-    client = None
 
-    request = ''
+    def render_rich_text(self, node):
+        self._renderer.render(node)
 
     def get_all_page_data(self):
         pages = self.client.entries({'content_type': 'pageVersatile'})
@@ -342,7 +350,7 @@ class ContentfulPage(ContentfulBase):
     def get_text_data(self, value):
         text_data = {
             'component': 'text',
-            'body': self.renderer.render(value),
+            'body': self.render_rich_text(value),
             'width_class': _get_width_class('Medium')  # TODO
         }
 
@@ -354,7 +362,7 @@ class ContentfulPage(ContentfulBase):
 
         hero_image_url = fields['image'].fields().get('file').get('url')
         hero_reverse = fields.get('image_side')
-        hero_body = self.renderer.render(fields.get('body'))
+        hero_body = self.render_rich_text(fields.get('body'))
 
         hero_data = {
             'component': 'hero',
@@ -365,7 +373,7 @@ class ContentfulPage(ContentfulBase):
             'body': hero_body,
             'image': 'https:' + hero_image_url,
             'image_class': 'mzp-l-reverse' if hero_reverse == 'Left' else '',
-            'cta': _make_cta_button(fields.get('cta'), request),
+            'cta': _make_cta_button(fields.get('cta')),
         }
 
         return hero_data
@@ -460,13 +468,13 @@ class ContentfulPage(ContentfulBase):
             'theme_class': _get_theme_class(fields.get('theme')),
             'has_bg': True if _get_theme_class(fields.get('theme')) != '' else False,
             'body_class': get_body_class(),
-            'body': self.renderer.render(fields.get('body')),
+            'body': self.render_rich_text(fields.get('body')),
             'media_class': get_media_class(),
             'image': 'https:' + split_image_url, #TODO max width
             'mobile_class': get_mobile_class(),
         }
 
-        #print(self.renderer.render(fields.get('body')))
+        #print(self.render(fields.get('body')))
 
         return split_data
 
@@ -477,7 +485,7 @@ class ContentfulPage(ContentfulBase):
         content_id = config_fields.get('component_callout').id
         content_obj = self.get_entry_by_id(content_id)
         content_fields = content_obj.fields()
-        content_body = self.renderer.render(content_fields.get('body')) if content_fields.get('body') else ''
+        content_body = self.render_rich_text(content_fields.get('body')) if content_fields.get('body') else ''
 
         callout_data = {
             'component': 'callout',
@@ -485,18 +493,17 @@ class ContentfulPage(ContentfulBase):
             'product_class': _get_product_class(content_fields.get('product_icon')),
             'title': content_fields.get('heading'),
             'body': content_body,
-            'cta': _make_cta_button(content_fields.get('cta'), request),
+            'cta': _make_cta_button(content_fields.get('cta')),
         }
 
         return callout_data
 
     def get_card_data(self, card_id, aspect_ratio):
         # need a fallback aspect ratio
-        if aspect_ratio == None:
-            aspect_ratio = '16:9'
+        aspect_ratio = aspect_ratio or '16:9'
         card_obj = self.get_entry_by_id(card_id)
         card_fields = card_obj.fields()
-        card_body = self.renderer.render(card_fields.get('body')) if card_fields.get('body') else ''
+        card_body = self.render_rich_text(card_fields.get('body')) if card_fields.get('body') else ''
 
         if 'image' in card_fields:
             card_image = card_fields.get('image')
@@ -585,7 +592,7 @@ class ContentfulPage(ContentfulBase):
     def get_picto_data(self, picto_id):
         picto_obj = self.get_entry_by_id(picto_id)
         picto_fields = picto_obj.fields()
-        picto_body = self.renderer.render(picto_fields.get('body')) if picto_fields.get('body') else ''
+        picto_body = self.render_rich_text(picto_fields.get('body')) if picto_fields.get('body') else ''
 
         if 'icon' in picto_fields:
             picto_image = picto_fields.get('icon')

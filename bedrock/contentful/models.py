@@ -3,8 +3,6 @@ from django.utils.timezone import now
 
 from django_extensions.db.fields.json import JSONField
 
-from bedrock.contentful.api import contentful_preview_page
-
 
 class ContentfulEntry(models.Model):
     contentful_id = models.CharField(max_length=20, unique=True)
