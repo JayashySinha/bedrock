@@ -341,7 +341,7 @@
 
 {# Split: https://protocol.mozilla.org/patterns/organisms/split.html #}
 {% macro split(block_class=None, theme_class=None, has_bg=False, body_class=None, media_class=None, mobile_class=None, image_url=None, include_highres_image=False, l10n_image=False, image_alt='') -%}
-  <section class="mzp-c-split {{ block_class }} {{ mobile_class }}">
+  <div class="mzp-c-split {{ block_class }} {{ mobile_class }}">
     {% if has_bg %}<div class="mzp-c-split-bg {{ theme_class }}">{% endif %}
       <div class="mzp-c-split-container">
         <div class="mzp-c-split-body {{ body_class }}">
@@ -364,7 +364,7 @@
         </div>
       </div>
     {% if has_bg %}</div>{% endif %}
-  </section>
+  </div>
 {%- endmacro %}
 
 {# Picto: https://protocol.mozilla.org/patterns/molecules/picto.html #}

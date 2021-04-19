@@ -44,6 +44,7 @@ WIDTHS = {
     'Medium': 'md',
     'Large': 'lg',
     'Extra Large': 'xl',
+    'Max': 'max',
 }
 LAYOUT_CLASS = {
     'layout2Cards': 'mzp-l-card-half',
@@ -353,6 +354,8 @@ class ContentfulPage(ContentfulBase):
                     entries.append(self.get_text_column_data(2, item.id))
                 elif content_type == 'textThreeColumns':
                     entries.append(self.get_text_column_data(3, item.id))
+                elif content_type == 'textFourColumns':
+                    entries.append(self.get_text_column_data(4, item.id))
 
         return {
             'page_type': page_type,
@@ -675,6 +678,7 @@ class ContentfulPage(ContentfulBase):
                 _get_width_class(fields.get('width')) if fields.get('width') else '',
                 _get_column_class(str(cols)),
                 _get_theme_class(fields.get('theme')) if fields.get('theme') else '',
+                'mzp-u-center' if fields.get('block_alignment') == 'Center' else '',
             ]
 
             return ' '.join(content_classes)
@@ -689,6 +693,8 @@ class ContentfulPage(ContentfulBase):
             text_data['content'].append(self.render_rich_text(fields.get('body_column_two')) if fields.get('body_column_two') else '')
         if cols > 2:
             text_data['content'].append(self.render_rich_text(fields.get('body_column_three')) if fields.get('body_column_three') else '')
+        if cols > 3:
+            text_data['content'].append(self.render_rich_text(fields.get('body_column_four')) if fields.get('body_column_four') else '')
 
         return text_data
 

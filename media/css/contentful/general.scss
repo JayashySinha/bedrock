@@ -44,6 +44,11 @@ $brand-theme: 'firefox';
 @import '../../protocol/css/components/logos/wordmark-product-pocket';
 
 
-.u-center {
+.mzp-u-center {
     text-align: center;
+
+    .mzp-c-logo,
+    .mzp-c-wordmark {
+        margin: 0 auto;
+    }
 }
