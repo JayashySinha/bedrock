@@ -257,7 +257,7 @@ class ContentfulPage(ContentfulBase):
     })
 
     def render_rich_text(self, node):
-        self._renderer.render(node)
+        return self._renderer.render(node)
 
     def get_all_page_data(self):
         pages = self.client.entries({'content_type': 'pageVersatile'})
@@ -603,58 +603,68 @@ class ContentfulPage(ContentfulBase):
         return card_layout_data
 
 
-    def get_picto_data(self, picto_id):
-        picto_obj = self.get_entry_by_id(picto_id)
-        picto_fields = picto_obj.fields()
-        picto_body = self.render_rich_text(picto_fields.get('body')) if picto_fields.get('body') else ''
+    def get_picto_data(self, picto_id, image_width):
+        entry = self.get_entry_by_id(picto_id)
+        fields = entry.fields()
+        body = self.render_rich_text(fields.get('body')) if fields.get('body') else ''
 
-        if 'icon' in picto_fields:
-            picto_image = picto_fields.get('icon')
-            image_url = _get_image_url(picto_image, 800)
+
+        if 'icon' in fields:
+            picto_image = fields.get('icon')
+            image_url = _get_image_url(picto_image, image_width)
         else:
             image_url = '' # TODO: this should cause an error, the macro requires an image
 
-        picto_data = {
+        data = {
                 'component': 'picto',
-                'heading': picto_fields.get('heading'),
-                'body': picto_body,
+                'heading': fields.get('heading'),
+                'body': body,
                 'image_url': image_url,
             }
 
-        return picto_data
+        return data
 
     def get_picto_layout_data(self, layout_id):
+        PICTO_ICON_SIZE = {
+            'Small': 32,
+            'Medium': 48,
+            'Large': 64,
+            'Extra Large': 96,
+            'Extra Extra Large': 192,
+        }
+        entry = self.get_entry_by_id(layout_id)
+        fields = entry.fields()
+        layout = entry.sys.get('content_type').id
 
         def get_layout_class():
             layout_classes = [
-                _get_width_class(config_fields.get('width')) if config_fields.get('width') else '',
-                _get_column_class(str(config_fields.get('blocks_per_row')) if config_fields.get('blocks_per_row') else '3'),
-                'mzp-t-picto-side' if config_fields.get('icon_position') == 'Side' else '',
-                'mzp-t-picto-center' if config_fields.get('block_alignment') == 'Center' else '',
-                _get_theme_class(config_fields.get('theme')) if config_fields.get('theme') else '',
+                _get_width_class(fields.get('width')) if fields.get('width') else '',
+                _get_column_class(str(fields.get('blocks_per_row')) if fields.get('blocks_per_row') else '3'),
+                'mzp-t-picto-side' if fields.get('icon_position') == 'Side' else '',
+                'mzp-t-picto-center' if fields.get('block_alignment') == 'Center' else '',
+                _get_theme_class(fields.get('theme')) if fields.get('theme') else '',
             ]
 
             return ' '.join(layout_classes)
 
-        config_obj = self.get_entry_by_id(layout_id)
-        config_fields = config_obj.fields()
-        layout = config_obj.sys.get('content_type').id
+        image_width = PICTO_ICON_SIZE.get(fields.get('icon_size')) if fields.get('icon_size') else PICTO_ICON_SIZE.get("Large")
 
-        picto_layout_data = {
+
+        layout_data = {
             'component': 'pictoLayout',
             'layout_class': get_layout_class(),
-            'heading_level': config_fields.get('heading_level')[1:] if config_fields.get('heading_level') else 3,
-            'image_width': 64,
+            'heading_level': fields.get('heading_level')[1:] if fields.get('heading_level') else 3,
+            'image_width': image_width,
             'pictos': [],
         }
 
-        pictos = config_fields.get('content')
+        pictos = fields.get('content')
         for picto in pictos:
             picto_id = picto.id
-            picto_data = self.get_picto_data(picto_id)
-            picto_layout_data.get('pictos').append(picto_data)
+            picto_data = self.get_picto_data(picto_id, image_width)
+            layout_data.get('pictos').append(picto_data)
 
-        return picto_layout_data
+        return layout_data
 
     def get_text_column_data(self, cols, text_id):
         entry_obj = self.get_entry_by_id(text_id)
