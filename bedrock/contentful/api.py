@@ -260,9 +260,9 @@ class ContentfulPage(ContentfulBase):
     def render_rich_text(self, node):
         return self._renderer.render(node)
 
-    def get_all_page_data(self):
-        pages = self.client.entries({'content_type': 'pageVersatile'})
-        return [self.get_page_data(p.id) for p in pages]
+    # def get_all_page_data(self):
+    #     pages = self.client.entries({'content_type': 'pageVersatile'})
+    #     return [self.get_page_data(p.id) for p in pages]
 
     def get_page_data(self, page_id):
         page = self.client.entry(page_id, {'include': 5})
@@ -376,7 +376,7 @@ class ContentfulPage(ContentfulBase):
         hero_obj = self.get_entry_by_id(hero_id)
         fields = hero_obj.fields()
 
-        hero_image_url = fields['image'].fields().get('file').get('url')
+        hero_image_url = _get_image_url(fields['image'], 800)
         hero_reverse = fields.get('image_side')
         hero_body = self.render_rich_text(fields.get('body'))
 
@@ -387,7 +387,7 @@ class ContentfulPage(ContentfulBase):
             'title': fields.get('heading'),
             'tagline': fields.get('tagline'),
             'body': hero_body,
-            'image': 'https:' + hero_image_url,
+            'image': hero_image_url,
             'image_class': 'mzp-l-reverse' if hero_reverse == 'Left' else '',
             'include_cta': True if fields.get('cta') else False,
             'cta': _make_cta_button(fields.get('cta')),
@@ -442,30 +442,27 @@ class ContentfulPage(ContentfulBase):
         split_obj = self.get_entry_by_id(split_id)
         fields = split_obj.fields()
 
-        def get_block_class():
-
+        def get_split_class():
             block_classes = [
                 'mzp-l-split-reversed' if fields.get('image_side') == 'Left' else '',
                 SPLIT_LAYOUT_CLASS.get(fields.get('body_width'), ''),
                 SPLIT_POP_CLASS.get(fields.get('image_pop'), ''),
             ]
-
             return ' '.join(block_classes)
 
         def get_body_class():
             body_classes = [
                 SPLIT_V_ALIGN_CLASS.get(fields.get('body_vertical_alignment'), ''),
-                SPLIT_H_ALIGN_CLASS.get(fields.get('body_horizontal_alignment'), '')
+                SPLIT_H_ALIGN_CLASS.get(fields.get('body_horizontal_alignment'), ''),
             ]
             return ' '.join(body_classes)
 
         def get_media_class():
             media_classes = [
-                SPLIT_MEDIA_WIDTH_CLASS.get(fields.get('image_width'), '')
+                SPLIT_MEDIA_WIDTH_CLASS.get(fields.get('image_width'), ''),
+                SPLIT_V_ALIGN_CLASS.get(fields.get('image_vertical_alignment'), ''),
+                SPLIT_H_ALIGN_CLASS.get(fields.get('image_horizontal_alignment'), ''),
             ]
-            # v_align_class = SPLIT_V_ALIGN_CLASS.get(fields.get('image_vertical_alignment'), '')
-            # h_align_class = SPLIT_H_ALIGN_CLASS.get(fields.get('image_horizontal_alignment'), '')
-
             return ' '.join(media_classes)
 
         def get_mobile_class():
@@ -473,21 +470,19 @@ class ContentfulPage(ContentfulBase):
                 'mzp-l-split-center-on-sm-md' if 'Center content' in fields.get('mobile_display') else '',
                 'mzp-l-split-hide-media-on-sm-md' if 'Hide image' in fields.get('mobile_display') else '',
             ]
-
             return ' '.join(mobile_classes)
 
-
-        split_image_url = fields['image'].fields().get('file').get('url')
+        split_image_url = _get_image_url(fields['image'], 800)
 
         split_data = {
             'component': 'split',
-            'block_class': get_block_class(),
+            'block_class': get_split_class(),
             'theme_class': _get_theme_class(fields.get('theme')),
             'has_bg': True if _get_theme_class(fields.get('theme')) != '' else False,
             'body_class': get_body_class(),
             'body': self.render_rich_text(fields.get('body')),
             'media_class': get_media_class(),
-            'image': 'https:' + split_image_url, #TODO max width
+            'image': split_image_url,
             'mobile_class': get_mobile_class(),
         }
 
