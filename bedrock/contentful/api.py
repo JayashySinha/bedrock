@@ -267,12 +267,12 @@ class ContentfulPage(ContentfulBase):
     def get_page_data(self, page_id):
         page = self.client.entry(page_id, {'include': 5})
         fields = page.fields()
-        page_data = {
+        data = {
             'page_type': page.content_type.id,
             'info': self.get_info_data(fields),
             'fields': fields,
         }
-        return page_data
+        return data
 
     # page entry
     def get_entry_data(self, page_id):
@@ -291,7 +291,7 @@ class ContentfulPage(ContentfulBase):
 
     @staticmethod
     def get_info_data(fields):
-        info_data = {
+        data = {
             'title': fields['preview_title'],
             'blurb': fields['preview_blurb'],
             'slug': fields.get('slug', 'home'),
@@ -299,16 +299,15 @@ class ContentfulPage(ContentfulBase):
 
         if 'preview_image' in fields:
             preview_image_url = fields['preview_image'].fields().get('file').get('url')
-            info_data['image'] = 'https:' + preview_image_url
+            data['image'] = 'https:' + preview_image_url
 
-        return info_data
+        return data
 
     def get_content(self, page_id):
         page_data = self.get_page_data(page_id)
         page_type = page_data['page_type']
         fields = page_data['fields']
         content = None
-
         entries = []
         if page_type == 'pageGeneral':
              # look through all entries and find content ones
