@@ -333,7 +333,7 @@ class ContentfulPage(ContentfulBase):
                 if content_type == 'componentHero':
                     entries.append(self.get_hero_data(item.id))
                 elif content_type == 'componentSectionHeading':
-                    entries.append(self.get_section_heading_data(item.id))
+                    entries.append(self.get_section_data(item.id))
                 elif content_type == 'componentSplitBlock':
                     entries.append(self.get_split_data(item.id))
                 elif content_type == 'layoutCallout':
@@ -364,23 +364,23 @@ class ContentfulPage(ContentfulBase):
         }
 
     def get_text_data(self, value):
-        text_data = {
+        data = {
             'component': 'text',
             'body': self.render_rich_text(value),
             'width_class': _get_width_class('Medium')  # TODO
         }
 
-        return text_data
+        return data
 
     def get_hero_data(self, hero_id):
-        hero_obj = self.get_entry_by_id(hero_id)
-        fields = hero_obj.fields()
+        entry_obj = self.get_entry_by_id(hero_id)
+        fields = entry_obj.fields()
 
         hero_image_url = _get_image_url(fields['image'], 800)
         hero_reverse = fields.get('image_side')
         hero_body = self.render_rich_text(fields.get('body'))
 
-        hero_data = {
+        data = {
             'component': 'hero',
             'theme_class': _get_theme_class(fields.get('theme')),
             'product_class': _get_product_class(fields.get('product_icon')),
@@ -393,18 +393,18 @@ class ContentfulPage(ContentfulBase):
             'cta': _make_cta_button(fields.get('cta')),
         }
 
-        return hero_data
+        return data
 
-    def get_section_heading_data(self, heading_id):
-        heading_obj = self.get_entry_by_id(heading_id)
-        fields = heading_obj.fields()
+    def get_section_data(self, heading_id):
+        entry_obj = self.get_entry_by_id(heading_id)
+        fields = entry_obj.fields()
 
-        heading_data = {
+        data = {
             'component': 'sectionHeading',
             'heading': fields.get('heading'),
         }
 
-        return heading_data
+        return data
 
     def get_split_data(self, split_id):
 
@@ -439,8 +439,8 @@ class ContentfulPage(ContentfulBase):
             'Bottom': 'mzp-l-split-pop-bottom',
         }
 
-        split_obj = self.get_entry_by_id(split_id)
-        fields = split_obj.fields()
+        entry_obj = self.get_entry_by_id(split_id)
+        fields = entry_obj.fields()
 
         def get_split_class():
             block_classes = [
@@ -474,7 +474,7 @@ class ContentfulPage(ContentfulBase):
 
         split_image_url = _get_image_url(fields['image'], 800)
 
-        split_data = {
+        data = {
             'component': 'split',
             'block_class': get_split_class(),
             'theme_class': _get_theme_class(fields.get('theme')),
@@ -488,53 +488,53 @@ class ContentfulPage(ContentfulBase):
 
         #print(self.render(fields.get('body')))
 
-        return split_data
+        return data
 
     def get_callout_data(self, callout_id):
-        config_obj = self.get_entry_by_id(callout_id)
-        config_fields = config_obj.fields()
+        entry_obj = self.get_entry_by_id(callout_id)
+        fields = entry_obj.fields()
 
-        content_id = config_fields.get('component_callout').id
+        content_id = fields.get('component_callout').id
         content_obj = self.get_entry_by_id(content_id)
         content_fields = content_obj.fields()
         content_body = self.render_rich_text(content_fields.get('body')) if content_fields.get('body') else ''
 
-        callout_data = {
+        data = {
             'component': 'callout',
-            'theme_class': _get_theme_class(config_fields.get('theme')),
+            'theme_class': _get_theme_class(fields.get('theme')),
             'product_class': _get_product_class(content_fields.get('product_icon')),
             'title': content_fields.get('heading'),
             'body': content_body,
             'cta': _make_cta_button(content_fields.get('cta')),
         }
 
-        return callout_data
+        return data
 
     def get_card_data(self, card_id, aspect_ratio):
         # need a fallback aspect ratio
         aspect_ratio = aspect_ratio or '16:9'
-        card_obj = self.get_entry_by_id(card_id)
-        card_fields = card_obj.fields()
-        card_body = self.render_rich_text(card_fields.get('body')) if card_fields.get('body') else ''
+        entry_obj = self.get_entry_by_id(card_id)
+        fields = entry_obj.fields()
+        card_body = self.render_rich_text(fields.get('body')) if fields.get('body') else ''
 
-        if 'image' in card_fields:
-            card_image = card_fields.get('image')
+        if 'image' in fields:
+            card_image = fields.get('image')
             # TODO smaller image files when layout allows it
             highres_image_url = _get_card_image_url(card_image, 800, aspect_ratio)
             image_url = _get_card_image_url(card_image, 800, aspect_ratio)
         else:
             image_url = ''
 
-        if 'you_tube' in card_fields:
-            youtube_id = _get_youtube_id(card_fields.get('you_tube'))
+        if 'you_tube' in fields:
+            youtube_id = _get_youtube_id(fields.get('you_tube'))
         else:
             youtube_id = ''
 
-        card_data = {
+        data = {
                 'component': 'card',
-                'heading': card_fields.get('heading'),
-                'tag': card_fields.get('tag'),
-                'link': card_fields.get('link'),
+                'heading': fields.get('heading'),
+                'tag': fields.get('tag'),
+                'link': fields.get('link'),
                 'body': card_body,
                 'aspect_ratio': _get_aspect_ratio_class(aspect_ratio) if image_url != '' else '',
                 'highres_image_url': highres_image_url,
@@ -542,14 +542,14 @@ class ContentfulPage(ContentfulBase):
                 'youtube_id': youtube_id,
             }
 
-        return card_data
+        return data
 
     def get_large_card_data(self, card_layout_id, card_id):
-        large_card_layout = self.get_entry_by_id(card_layout_id)
-        large_card_fields = large_card_layout.fields()
+        entry_obj = self.get_entry_by_id(card_layout_id)
+        fields = entry_obj.fields()
 
         # large card data
-        large_card_image = large_card_fields.get('image')
+        large_card_image = fields.get('image')
         highres_image_url = _get_card_image_url(large_card_image, 1860, "16:9")
         image_url = _get_card_image_url(large_card_image, 1860, "16:9")
 
@@ -561,17 +561,17 @@ class ContentfulPage(ContentfulBase):
         card_data['highres_image_url'] = highres_image_url
         card_data['image_url'] = image_url
 
-        large_card_data = card_data
+        data = card_data
 
-        return large_card_data
+        return data
 
     def get_card_layout_data(self, layout_id):
-        config_obj = self.get_entry_by_id(layout_id)
-        config_fields = config_obj.fields()
-        aspect_ratio = config_fields.get('aspect_ratio')
-        layout = config_obj.sys.get('content_type').id
+        entry_obj = self.get_entry_by_id(layout_id)
+        fields = entry_obj.fields()
+        aspect_ratio = fields.get('aspect_ratio')
+        layout = entry_obj.sys.get('content_type').id
 
-        card_layout_data = {
+        data = {
             'component': 'cardLayout',
             'layout_class': _get_layout_class(layout),
             'aspect_ratio': aspect_ratio,
@@ -580,14 +580,14 @@ class ContentfulPage(ContentfulBase):
 
         follows_large_card = False
         if layout == 'layout5Cards':
-            card_layout_id = config_fields.get('large_card').id
-            card_id = config_fields.get('large_card').fields().get('card').id
+            card_layout_id = fields.get('large_card').id
+            card_id = fields.get('large_card').fields().get('card').id
             large_card_data = self.get_large_card_data(card_layout_id, card_id)
 
-            card_layout_data.get('cards').append(large_card_data)
+            data.get('cards').append(large_card_data)
             follows_large_card = True
 
-        cards = config_fields.get('content')
+        cards = fields.get('content')
         for card in cards:
             if follows_large_card == True:
                 this_aspect = '1:1'
@@ -596,9 +596,9 @@ class ContentfulPage(ContentfulBase):
                 this_aspect = aspect_ratio
             card_id = card.id
             card_data = self.get_card_data(card_id, this_aspect)
-            card_layout_data.get('cards').append(card_data)
+            data.get('cards').append(card_data)
 
-        return card_layout_data
+        return data
 
 
     def get_picto_data(self, picto_id, image_width):
@@ -648,7 +648,7 @@ class ContentfulPage(ContentfulBase):
         image_width = PICTO_ICON_SIZE.get(fields.get('icon_size')) if fields.get('icon_size') else PICTO_ICON_SIZE.get("Large")
 
 
-        layout_data = {
+        data = {
             'component': 'pictoLayout',
             'layout_class': get_layout_class(),
             'heading_level': fields.get('heading_level')[1:] if fields.get('heading_level') else 3,
@@ -660,9 +660,9 @@ class ContentfulPage(ContentfulBase):
         for picto in pictos:
             picto_id = picto.id
             picto_data = self.get_picto_data(picto_id, image_width)
-            layout_data.get('pictos').append(picto_data)
+            data.get('pictos').append(picto_data)
 
-        return layout_data
+        return data
 
     def get_text_column_data(self, cols, text_id):
         entry_obj = self.get_entry_by_id(text_id)
@@ -678,20 +678,20 @@ class ContentfulPage(ContentfulBase):
 
             return ' '.join(content_classes)
 
-        text_data = {
+        data = {
             'component': 'textColumns',
             'layout_class': get_content_class(),
             'content': [self.render_rich_text(fields.get('body_column_one')) if fields.get('body_column_one') else ''],
         }
 
         if cols > 1:
-            text_data['content'].append(self.render_rich_text(fields.get('body_column_two')) if fields.get('body_column_two') else '')
+            data['content'].append(self.render_rich_text(fields.get('body_column_two')) if fields.get('body_column_two') else '')
         if cols > 2:
-            text_data['content'].append(self.render_rich_text(fields.get('body_column_three')) if fields.get('body_column_three') else '')
+            data['content'].append(self.render_rich_text(fields.get('body_column_three')) if fields.get('body_column_three') else '')
         if cols > 3:
-            text_data['content'].append(self.render_rich_text(fields.get('body_column_four')) if fields.get('body_column_four') else '')
+            data['content'].append(self.render_rich_text(fields.get('body_column_four')) if fields.get('body_column_four') else '')
 
-        return text_data
+        return data
 
 contentful_preview_page = ContentfulPage()
 
