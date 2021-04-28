@@ -303,7 +303,19 @@ class ContentfulPage(ContentfulBase):
 
         return data
 
-    def get_content(self, page_id):
+    def get_content(self, entry_id):
+        #check if it is a page or a connector
+        entry_obj = self.client.entry(entry_id)
+        entry_type = entry_obj.content_type.id
+        if entry_type.startswith('page'):
+            page_id = entry_id
+        elif entry_type == 'connectHomepage':
+            entry_fields = entry_obj.fields()
+            connected_entry = entry_fields.get('entry')
+            page_id = connected_entry.id
+        else:
+            raise ValueError(f'{entry_type} is not a recognized page type')
+
         page_data = self.get_page_data(page_id)
         page_type = page_data['page_type']
         fields = page_data['fields']
@@ -389,7 +401,7 @@ class ContentfulPage(ContentfulBase):
             'image': hero_image_url,
             'image_class': 'mzp-l-reverse' if hero_reverse == 'Left' else '',
             'include_cta': True if fields.get('cta') else False,
-            'cta': _make_cta_button(fields.get('cta')),
+            'cta': _make_cta_button(fields.get('cta')) if fields.get('cta') else '',
         }
 
         return data
