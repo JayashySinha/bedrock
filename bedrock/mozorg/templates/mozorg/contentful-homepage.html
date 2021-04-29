@@ -92,6 +92,7 @@
 
 
   {% for entry in entries -%}
+
     {% if entry.component == 'hero' %}
 
     {% if entries.index(entry) == 0: %}
@@ -105,14 +106,13 @@
         tagline=entry.tagline,
         desc=entry.body|safe,
         class=entry.theme_class + ' ' + entry.product_class + ' ' + entry.image_class,
-        include_cta=entry.cta.include_cta,
+        include_cta=entry.include_cta,
         heading_level=heading_level,
         image_url=entry.image,
         include_highres_image=False,
-        l10n_image=False
       ) %}
 
-        {{ cta(entry.cta.action, entry.cta.label) }}
+        {{ entry.cta }}
 
       {% endcall %}
 
@@ -124,16 +124,26 @@
         class=entry.theme_class + ' ' + entry.product_class,
       ) %}
 
-        {{ cta(entry.cta.action, entry.cta.label) }}
+        {{ entry.cta }}
 
       {% endcall %}
 
     {% elif entry.component == 'text' %}
 
       <div class="mzp-l-content {{ entry.width_class }}">
-        <article class="mzp-c-article">
+        <article>
           {{ entry.body|safe }}
         </article>
+      </div>
+
+    {% elif entry.component == 'textColumns' %}
+
+      <div class="mzp-l-content mzp-l-columns {{ entry.layout_class }}">
+        {% for body in entry.content -%}
+          <div>
+            {{ body|safe }}
+          </div>
+        {% endfor %}
       </div>
 
     {% elif entry.component == 'cardLayout' %}
@@ -157,7 +167,7 @@
               image_url=card_data.image_url,
               aspect_ratio=card_data.aspect_ratio,
               link_url=card_data.link,
-              youtube_id=card_data.youtube_id,
+              youtube_id=card_data.youtube,
             ) }}
 
           {% endfor %}
@@ -165,8 +175,42 @@
         </div>
       </div>
     {% elif entry.component == 'sectionHeading' %}
-      <h2 class="c-section-heading">{{ entry.heading }}</h2>
+      <h2 class="mzp-c-section-heading">{{ entry.heading }}</h2>
+    {% elif entry.component == 'pictoLayout' %}
+
+      <ul class="mzp-l-content {{ entry.layout_class }}">
+      {% for picto_data in entry.pictos -%}
+
+        {{ picto(
+          image_url=picto_data.image_url,
+          image_width=entry.image_width,
+          heading=picto_data.heading,
+          heading_level=entry.heading_level,
+          body=picto_data.body,
+        ) }}
+
+      {% endfor %}
+      </ul>
+
+    {% elif entry.component == 'split' %}
+
+      {% call split(
+        block_class=entry.block_class,
+        body_class=entry.body_class,
+        theme_class=entry.theme_class,
+        has_bg=entry.has_bg,
+        media_class=entry.media_class,
+        mobile_class=entry.mobile_class,
+        image_url=entry.image,
+        include_highres_image=False,
+      ) %}
+
+        {{ entry.body|safe }}
+
+      {% endcall %}
+
     {% endif %}
+
 
   {% endfor %}
 
