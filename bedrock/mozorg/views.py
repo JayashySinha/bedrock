@@ -144,14 +144,11 @@ def home_view(request):
 
 @method_decorator(never_cache, name='dispatch')
 class ContentfulPreviewView(L10nTemplateView):
-    locales_map = {
-        'en': 'en-US',
-    }
-
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         content_id = ctx['content_id']
-        ctx.update(contentful_preview_page.get_content(content_id))
+        locale = l10n_utils.get_locale(self.request)
+        ctx.update(contentful_preview_page.get_content(content_id, locale))
         return ctx
 
     def render_to_response(self, context, **response_kwargs):

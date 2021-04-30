@@ -257,6 +257,8 @@ class ContentfulPage(ContentfulBase):
         'embedded-entry-inline': InlineEntryRenderer,
     })
 
+    locale = 'en-US'
+
     def render_rich_text(self, node):
         return self._renderer.render(node)
 
@@ -265,7 +267,7 @@ class ContentfulPage(ContentfulBase):
     #     return [self.get_page_data(p.id) for p in pages]
 
     def get_page_data(self, page_id):
-        page = self.client.entry(page_id, {'include': 5})
+        page = self.client.entry(page_id, {'include': 5, 'locale': self.locale})
         fields = page.fields()
         data = {
             'page_type': page.content_type.id,
@@ -276,18 +278,18 @@ class ContentfulPage(ContentfulBase):
 
     # page entry
     def get_entry_data(self, page_id):
-        entry_data = self.client.entry(page_id)
+        entry_data = self.client.entry(page_id, {'locale': self.locale})
         # print(entry_data.__dict__)
         return entry_data
 
     def get_page_type(self, page_id):
-        page_obj = self.client.entry(page_id)
+        page_obj = self.client.entry(page_id, {'locale': self.locale})
         page_type = page_obj.sys.get('content_type').id
         return page_type
 
     # any entry
     def get_entry_by_id(self, entry_id):
-        return self.client.entry(entry_id)
+        return self.client.entry(entry_id, {'locale': self.locale})
 
     @staticmethod
     def get_info_data(fields):
@@ -303,7 +305,8 @@ class ContentfulPage(ContentfulBase):
 
         return data
 
-    def get_content(self, entry_id):
+    def get_content(self, entry_id, request_locale):
+        self.locale = contentful_locale(request_locale)
         #check if it is a page or a connector
         entry_obj = self.client.entry(entry_id)
         entry_type = entry_obj.content_type.id
