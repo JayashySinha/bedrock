@@ -128,11 +128,11 @@ def home_view(request):
     }
 
     if locale.startswith('en-'):
-        template_name = 'mozorg/home/home-en.html'
-        ctx['page_content_cards'] = get_page_content_cards('home-en', 'en-US')
+        template_name = 'mozorg/contentful-homepage.html'
+        ctx.update(contentful_preview_page.get_content('58YIvwDmzSDjtvpSqstDcL', 'en-US'))
     elif locale == 'de':
-        template_name = 'mozorg/home/home-de.html'
-        ctx['page_content_cards'] = get_page_content_cards('home-de', 'de')
+        template_name = 'mozorg/contentful-homepage.html'
+        ctx.update(contentful_preview_page.get_content('4k3CxqZGjxXOjR1I0dhyto', 'de'))
     elif locale == 'fr':
         template_name = 'mozorg/home/home-fr.html'
         ctx['page_content_cards'] = get_page_content_cards('home-fr', 'fr')

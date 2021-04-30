@@ -294,12 +294,13 @@ class ContentfulPage(ContentfulBase):
     @staticmethod
     def get_info_data(fields):
         data = {
-            'title': fields['preview_title'],
-            'blurb': fields['preview_blurb'],
+            'title': fields.get('preview_title', ''),
+            'blurb': fields.get('preview_blurb', ''),
             'slug': fields.get('slug', 'home'),
         }
 
         if 'preview_image' in fields:
+            # TODO request proper size image
             preview_image_url = fields['preview_image'].fields().get('file').get('url')
             data['image'] = 'https:' + preview_image_url
 
@@ -307,7 +308,7 @@ class ContentfulPage(ContentfulBase):
 
     def get_content(self, entry_id, request_locale):
         self.locale = contentful_locale(request_locale)
-        #check if it is a page or a connector
+        # check if it is a page or a connector
         entry_obj = self.client.entry(entry_id)
         entry_type = entry_obj.content_type.id
         if entry_type.startswith('page'):
@@ -334,10 +335,8 @@ class ContentfulPage(ContentfulBase):
                 elif key == 'layout_callout':
                     entries.append(self.get_callout_data(value.id))
         elif page_type == 'pageVersatile':
-            # versatile
             content = fields.get('content')
         elif page_type == 'pageHome':
-            # home
             content = fields.get('content')
 
         if content:
