@@ -128,9 +128,11 @@ def home_view(request):
     }
 
     if locale.startswith('en-'):
+        # TODO, should we fall back to the ROW homepage if something goes wrong ?
         template_name = 'mozorg/contentful-homepage.html'
         ctx.update(contentful_preview_page.get_content('58YIvwDmzSDjtvpSqstDcL', 'en-US'))
     elif locale == 'de':
+        # TODO, should we fall back to the ROW homepage if something goes wrong ?
         template_name = 'mozorg/contentful-homepage.html'
         ctx.update(contentful_preview_page.get_content('4k3CxqZGjxXOjR1I0dhyto', 'de'))
     elif locale == 'fr':
@@ -156,7 +158,7 @@ class ContentfulPreviewView(L10nTemplateView):
         if page_type == "pageHome":
             template = 'mozorg/contentful-homepage.html'
         else:
-            template = 'mozorg/contentful-preview.html'
+            template = 'mozorg/contentful-all.html'
 
         return l10n_utils.render(self.request,
                                  template,

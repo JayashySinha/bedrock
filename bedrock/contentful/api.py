@@ -149,7 +149,7 @@ def _make_logo(entry):
         'product_icon': PRODUCT_THEMES.get(product, ""),
     }
 
-    return render_to_string('logo.html', data, get_current_request())
+    return render_to_string('includes/contentful/logo.html', data, get_current_request())
 
 
 def _make_wordmark(entry):
@@ -161,7 +161,7 @@ def _make_wordmark(entry):
         'product_icon': PRODUCT_THEMES.get(product, ""),
     }
 
-    return render_to_string('wordmark.html', data, get_current_request())
+    return render_to_string('includes/contentful/wordmark.html', data, get_current_request())
 
 
 def _make_cta_button(entry):
@@ -200,7 +200,7 @@ def _make_cta_button(entry):
         'button_class': ' '.join(button_class),
 
     }
-    return render_to_string('cta.html', data, get_current_request())
+    return render_to_string('includes/contentful/cta.html', data, get_current_request())
 
 
 class StrongRenderer(BaseInlineRenderer):
