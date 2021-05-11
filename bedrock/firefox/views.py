@@ -952,6 +952,8 @@ class firefoxContentul(L10nTemplateView):
         ctx = super().get_context_data(**kwargs)
         content_id = ctx['content_id']
         locale = l10n_utils.get_locale(self.request)
+        page_info = contentful_preview_page.get_info_data(content_id, locale)
+        self.request.page_info = page_info
         ctx.update(contentful_preview_page.get_content(content_id, locale))
         return ctx
 

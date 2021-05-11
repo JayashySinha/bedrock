@@ -187,6 +187,7 @@
           heading=picto_data.heading,
           heading_level=entry.heading_level,
           body=picto_data.body,
+          base_el='li'
         ) }}
 
       {% endfor %}
@@ -198,7 +199,6 @@
         block_class=entry.block_class,
         body_class=entry.body_class,
         theme_class=entry.theme_class,
-        has_bg=entry.has_bg,
         media_class=entry.media_class,
         mobile_class=entry.mobile_class,
         image_url=entry.image,

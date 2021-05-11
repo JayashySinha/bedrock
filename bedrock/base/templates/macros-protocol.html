@@ -66,8 +66,8 @@
 
 
 {# Split: https://protocol.mozilla.org/patterns/organisms/split.html #}
-{% macro split(block_class=None, theme_class=None, body_class=None, image_url=None, media_class=None, include_highres_image=False, l10n_image=False, image_alt='') -%}
-<section class="mzp-c-split{% if block_class %} {{ block_class }}{% endif %}">
+{% macro split(block_class=None, theme_class=None, body_class=None, image_url=None, media_class=None, include_highres_image=False, l10n_image=False, image_alt='', mobile_class=None) -%}
+<section class="mzp-c-split{% if block_class %} {{ block_class }}{% endif %}{% if mobile_class %} {{ mobile_class }}{% endif %}">
   {% if theme_class %}
   <div class="mzp-c-split-bg {{ theme_class }}">
   {% endif %}
@@ -80,10 +80,12 @@
       {% if include_highres_image %}
         {{ high_res_img(image_url, {'alt': image_alt, 'l10n': l10n_image, 'class': 'mzp-c-split-media-asset'}) }}
       {% else %}
-        {% if l10n_image %}
+        {% if image_url.startswith('https')  %}
+          <img class="mzp-c-split-media-asset" src="{{ image_url }}" alt="{{ image_alt }}">
+        {% elif l10n_image %}
           <img class="mzp-c-split-media-asset" src="{{ l10n_img(image_url) }}" alt="{{ image_alt }}">
         {% else %}
-          <img class="mzp-c-split-media-asset" src="{{ static(image_url) }}" alt="{{ image_alt }}">
+          <img class="mzp-c-split-media-asset"  src="{{ static(image_url) }}" alt="{{ image_alt }}">
         {% endif %}
       {% endif %}
     </div>
@@ -270,7 +272,9 @@
     </div>
   {% else %}
     <div class="mzp-c-picto-image">
-    {% if l10n_image %}
+    {% if image_url.startswith('https')  %}
+      <img src="{{ image_url }}" alt="" width="{{ image_width }}">
+    {% elif l10n_image %}
       <img src="{{ l10n_img(image_url) }}" alt="" loading="{{ loading }}" width="{{ image_width }}">
     {% elif image_url %}
       <img src="{{ static(image_url) }}" alt="" loading="{{ loading }}" width="{{ image_width }}">
@@ -338,48 +342,3 @@
   </nav>
 {%- endmacro %}
 
-
-{# Split: https://protocol.mozilla.org/patterns/organisms/split.html #}
-{% macro split(block_class=None, theme_class=None, has_bg=False, body_class=None, media_class=None, mobile_class=None, image_url=None, include_highres_image=False, l10n_image=False, image_alt='') -%}
-  <div class="mzp-c-split {{ block_class }} {{ mobile_class }}">
-    {% if has_bg %}<div class="mzp-c-split-bg {{ theme_class }}">{% endif %}
-      <div class="mzp-c-split-container">
-        <div class="mzp-c-split-body {{ body_class }}">
-          {{ caller() }}
-        </div>
-        <div class="mzp-c-split-media {{ media_class }}">
-          {% if image_url %}
-            {% if include_highres_image %}
-              {{ high_res_img(image_url, {'alt': image_alt, 'l10n': l10n_image}) }}
-            {% else %}
-              {% if image_url.startswith('https')  %}
-                <img class="mzp-c-split-media-asset" src="{{ image_url }}" alt="">
-              {% elif l10n_image %}
-                <img class="mzp-c-split-media-asset" src="{{ l10n_img(image_url) }}" alt="">
-              {% else %}
-                <img class="mzp-c-split-media-asset"  src="{{ static(image_url) }}" alt="">
-              {% endif %}
-            {% endif %}
-          {% endif %}
-        </div>
-      </div>
-    {% if has_bg %}</div>{% endif %}
-  </div>
-{%- endmacro %}
-
-{# Picto: https://protocol.mozilla.org/patterns/molecules/picto.html #}
-{% macro picto(image_url, image_width=64, heading=None, body=None, class=None, heading_level=3, base_el='li') -%}
-  <{{ base_el }} class="mzp-c-picto {% if class %}{{ class }}{% endif %}">
-    <div class="mzp-c-picto-image">
-      {% if image_url.startswith('https')  %}
-        <img src="{{ image_url }}" alt="" width="{{ image_width }}">
-      {% else %}
-        <img src="{{ static(image_url) }}" alt="" width="{{ image_width }}">
-      {% endif %}
-    </div>
-    <h{{ heading_level }} class="mzp-c-picto-heading">{{ heading }}</h{{ heading_level }}>
-    <div class="mzp-c-picto-body">
-      {{ body|safe }}
-    </div>
-  </{{ base_el }}>
-{%- endmacro %}

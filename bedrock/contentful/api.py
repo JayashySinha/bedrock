@@ -165,40 +165,21 @@ def _make_wordmark(entry):
 
 
 def _make_cta_button(entry):
-#     # print(entry.fields())
-
-# def get_cta_data(self, cta):
-#         if cta:
-#             cta_id = cta.id
-#         else:
-#             return {'include_cta': False}
-
-#         cta_obj = self.get_entry_by_id(cta_id)
-#         cta_fields = cta_obj.fields()
-
-#         cta_data = {
-#             'component': cta_obj.sys.get('content_type').id,
-#             'label': cta_fields.get('label'),
-#             'action': cta_fields.get('action'),
-#             'size': 'mzp-t-xl',  # TODO
-#             'theme': 'mzp-t-primary',  # TODO
-#             'include_cta': True,
-#         }
-#         return cta_data
-
     fields = entry.fields()
 
     button_class = [
-        'mzp-t-product', # TODO, not product on Mozilla pages
+        'mzp-t-product', # TODO, only add on Firefox themed pages
         'mzp-t-secondary' if fields.get('theme') == 'Secondary' else '',
+        f'mzp-t-{WIDTHS.get(fields.get("size"), "")}' if fields.get('size') else '',
     ]
 
     data = {
         'action': fields.get('action'),
         'label': fields.get('label'),
-        'button_size': WIDTHS.get(fields.get("size"), ""),
         'button_class': ' '.join(button_class),
-
+        #TODO
+        'location': '', #eg primary, secondary
+        'cta_text': fields.get('label'), # needs to use English
     }
     return render_to_string('includes/contentful/cta.html', data, get_current_request())
 
@@ -271,7 +252,7 @@ class ContentfulPage(ContentfulBase):
         fields = page.fields()
         data = {
             'page_type': page.content_type.id,
-            'info': self.get_info_data(fields),
+            'info': self.get_info_data(page_id, self.locale),
             'fields': fields,
         }
         return data
@@ -291,12 +272,20 @@ class ContentfulPage(ContentfulBase):
     def get_entry_by_id(self, entry_id):
         return self.client.entry(entry_id, {'locale': self.locale})
 
-    @staticmethod
-    def get_info_data(fields):
+    def get_info_data(self, entry_id, request_locale):
+        # TODO, need to enable connectors
+        page = self.client.entry(entry_id, {'include': 5, 'locale': request_locale})
+        fields = page.fields()
+        folder = fields.get('folder', '')
+        in_firefox = 'firefox-' if 'firefox' in folder else ''
+        slug = fields.get('slug', 'home')
+
         data = {
             'title': fields.get('preview_title', ''),
             'blurb': fields.get('preview_blurb', ''),
-            'slug': fields.get('slug', 'home'),
+            'slug': slug,
+            'utm_source': 'www.mozilla.org-' + in_firefox + slug, #eg www.mozilla.org-firefox-accounts or www.mozilla.org-firefox-sync
+            'utm_campaign': in_firefox + slug, #eg firefox-sync
         }
 
         if 'preview_image' in fields:
@@ -491,7 +480,6 @@ class ContentfulPage(ContentfulBase):
             'component': 'split',
             'block_class': get_split_class(),
             'theme_class': _get_theme_class(fields.get('theme')),
-            'has_bg': True if _get_theme_class(fields.get('theme')) != '' else False,
             'body_class': get_body_class(),
             'body': self.render_rich_text(fields.get('body')),
             'media_class': get_media_class(),
