@@ -1,5 +1,5 @@
 from django.conf import settings
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse, urlunparse, urlencode, parse_qs
 
 import contentful as api
 from crum import get_current_request
@@ -7,6 +7,7 @@ from rich_text_renderer import RichTextRenderer
 from rich_text_renderer.base_node_renderer import BaseNodeRenderer
 from rich_text_renderer.block_renderers import BaseBlockRenderer
 from rich_text_renderer.text_renderers import BaseInlineRenderer
+#from unidecode import unidecode
 
 from lib.l10n_utils import render_to_string
 
@@ -179,9 +180,21 @@ def _make_cta_button(entry):
         'button_class': ' '.join(button_class),
         #TODO
         'location': '', #eg primary, secondary
-        'cta_text': fields.get('label'), # needs to use English
+        'cta_text': fields.get('label'), # TODO needs to use English in all locales
     }
     return render_to_string('includes/contentful/cta.html', data, get_current_request())
+
+
+def _make_plain_text(rich_text_obj):
+    content = rich_text_obj['content']
+    plain = ''
+
+    for node in content:
+        plain += node['value']
+
+    # TODO
+    #return unidecode(plain)
+    return plain
 
 
 class StrongRenderer(BaseInlineRenderer):
@@ -189,6 +202,45 @@ class StrongRenderer(BaseInlineRenderer):
     def _render_tag(self):
         return 'strong'
 
+
+class EmphasisRenderer(BaseInlineRenderer):
+    @property
+    def _render_tag(self):
+        return 'em'
+
+
+class LinkRenderer(BaseBlockRenderer):
+    def render(self, node):
+        url = urlparse(node["data"]["uri"])
+        request = get_current_request()
+        ref = ''
+        rel = ''
+        data_cta = ''
+
+        # add referral info to links to other mozilla properties
+        if 'mozilla.org' in url.netloc and url.netloc != 'www.mozilla.org':
+            # don't add if there's already utms
+            if 'utm_' not in url.query:
+                params = {
+                    'utm_source': 'www.mozilla.org',
+                    'utm_medium': 'referral',
+                    'utm_campaign': request.page_info['utm_campaign'],
+                }
+                add = '?' if url.query == '' else '&'
+                ref = add + urlencode(params)
+
+        # TODO, should this be based on the current server (ie dev, stage)?
+        # add attributes for external links
+        if url.netloc != 'www.mozilla.org':
+            # add security measures
+            rel = ' rel="external noopener"'
+            # add analytics
+            cta_text = _make_plain_text(node)
+            data_cta = f' data-cta-type="link" data-cta-text="{cta_text}"'
+
+        return '<a href="{0}{1}"{2}{3}>{4}</a>'.format(
+            urlunparse(url), ref, data_cta, rel, self._render_content(node)
+        )
 
 def _render_list(tag, content):
     return f"<{tag} class='mzp-u-list-styled'>{content}</{tag}>"
@@ -232,7 +284,9 @@ class ContentfulPage(ContentfulBase):
     # TODO: If last item in content is a p:only(a) add cta link class?
     # TODO: Error/ Warn / Transform links to allizom
     _renderer = RichTextRenderer({
+        'hyperlink': LinkRenderer,
         'bold': StrongRenderer,
+        'italic': EmphasisRenderer,
         'Unordered-list': UlRenderer,
         'ordered-list': OlRenderer,
         'embedded-entry-inline': InlineEntryRenderer,
