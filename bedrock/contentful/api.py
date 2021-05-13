@@ -185,17 +185,37 @@ def _make_cta_button(entry):
     return render_to_string('includes/contentful/cta.html', data, get_current_request())
 
 
-def _make_plain_text(rich_text_obj):
-    content = rich_text_obj['content']
+def _make_plain_text(node):
+    content = node['content']
     plain = ''
 
-    for node in content:
-        plain += node['value']
+    for child_node in content:
+        plain += child_node['value']
 
     # TODO
     #return unidecode(plain)
     return plain
 
+
+def _only_child(node, nodeType):
+    content = node['content']
+    found = 0
+    only = True
+    for child_node in content:
+        # if it's not the matching node type
+        if child_node['nodeType'] != nodeType and found == 0:
+            # and not an empty text node
+            if child_node['nodeType'] == 'text' and child_node['value'] != '':
+                # it's not the only child
+                only = False
+                break
+        elif child_node['nodeType'] == nodeType:
+            found += 1
+            if found > 1:
+                only = False
+                break
+
+    return only
 
 class StrongRenderer(BaseInlineRenderer):
     @property
@@ -256,6 +276,19 @@ class OlRenderer(BaseBlockRenderer):
         return _render_list('ol', self._render_content(node))
 
 
+class PRenderer(BaseBlockRenderer):
+    def render(self, node):
+        # contains only one node which is a link
+        if _only_child(node, 'hyperlink'):
+            return f'<p class="mzp-c-cta-link">{self._render_content(node)}</p>'
+        # contains only an empty text node
+        elif len(node['content']) == 1 and node['content'][0]['nodeType'] == 'text' and node['content'][0]['value'] == '':
+            # don't print
+            return ''
+        else:
+            return f"<p>{self._render_content(node)}</p>"
+
+
 class InlineEntryRenderer(BaseNodeRenderer):
     def render(self, node):
         entry = node['data']['target']
@@ -280,8 +313,6 @@ class ContentfulBase:
 
 class ContentfulPage(ContentfulBase):
     # TODO: List: stop list items from being wrapped in paragraph tags
-    # TODO: Don't output empty paragraph tags
-    # TODO: If last item in content is a p:only(a) add cta link class?
     # TODO: Error/ Warn / Transform links to allizom
     _renderer = RichTextRenderer({
         'hyperlink': LinkRenderer,
@@ -289,6 +320,7 @@ class ContentfulPage(ContentfulBase):
         'italic': EmphasisRenderer,
         'Unordered-list': UlRenderer,
         'ordered-list': OlRenderer,
+        'paragraph': PRenderer,
         'embedded-entry-inline': InlineEntryRenderer,
     })
 
