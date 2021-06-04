@@ -6,6 +6,7 @@ awesome, and open source as always. Perhaps even a little more.
 
 [mozilla]: https://www.mozilla.org/
 
+
 [![Circle CI](https://circleci.com/gh/mozilla/bedrock.svg?style=svg)](https://circleci.com/gh/mozilla/bedrock)
 
 Docs
